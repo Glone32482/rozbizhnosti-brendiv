@@ -1,0 +1,1125 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Розбіжності брендів Tabletki</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --wu: #ffd400;
+  --wu-soft: #fff6c2;
+  --ink: #1c1c1e;
+  --ink-2: #4a4a4f;
+  --ink-3: #8a8a90;
+  --hero: #1c1c1e;
+  --hero-2: #2a2a2d;
+  --hero-line: #4a4a4f;
+  --hero-text: #b8b8bd;
+  --bg: #f5f5f2;
+  --card: #ffffff;
+  --line: #e7e6e1;
+  --bad: #d93a2b;
+  --bad-soft: #fdecea;
+  --ok: #1f9d55;
+  --warn: #b7791f;
+  --warn-soft: #fdf3e1;
+  --soft: #eeeeea;
+  --shadow: 0 1px 2px rgba(28, 28, 30, .06), 0 8px 24px rgba(28, 28, 30, .06);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "Onest", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+h1, p { margin: 0; }
+button, input { font: inherit; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.wrap { max-width: 1600px; margin: 0 auto; padding: 0 32px; }
+.muted { color: var(--ink-3); }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.wu { background: var(--wu); border-color: var(--wu); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+/* Шапка: завантаження і зведення */
+.hero { background: var(--hero); color: #fff; padding: 22px 0 26px; }
+.hero-top { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.hero-top h1 { font-size: 19px; font-weight: 700; }
+.logo { padding: 3px 10px; border-radius: 999px; background: var(--wu); color: var(--ink); font-weight: 800; font-size: 12px; }
+.spacer { flex: 1; }
+.hero-grid { display: grid; grid-template-columns: minmax(320px, 1.1fr) 2fr; gap: 18px; align-items: start; }
+
+.drop { display: grid; gap: 10px; align-content: center; min-height: 128px; padding: 18px 20px; border: 2px dashed var(--hero-line); border-radius: 14px; cursor: pointer; }
+.drop:hover, .drop.over { border-color: var(--wu); }
+.drop.over { background: rgba(255, 212, 0, .08); }
+.drop b { font-size: 15px; }
+.drop .hint { color: var(--hero-text); }
+.slots { display: grid; gap: 6px; }
+.slot { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.slot span { flex: none; color: var(--hero-text); }
+.slot em { font-style: normal; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot em.none { color: #6e6e74; font-weight: 500; }
+.slot em.done::before { content: "✓ "; color: var(--wu); }
+.stage { color: var(--hero-text); font-size: 12px; }
+.error { color: #ff9c90; }
+.progress { height: 6px; border-radius: 999px; background: #3a3a3f; overflow: hidden; }
+.progress span { display: block; height: 100%; width: 0; background: var(--wu); transition: width .2s; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.kpi { display: grid; align-content: start; gap: 2px; padding: 16px 18px; border: none; border-radius: 14px; background: var(--hero-2); color: #fff; text-align: left; }
+button.kpi { cursor: pointer; }
+button.kpi:disabled { cursor: default; }
+button.kpi:not(:disabled):hover { outline: 2px solid var(--hero-line); }
+.kpi[aria-pressed="true"] { outline: 2px solid #fff; }
+.kpi span { color: var(--hero-text); font-weight: 500; }
+.kpi b { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.25; }
+.kpi small { color: #8a8a90; }
+.kpi.main { background: var(--wu); color: var(--ink); }
+.kpi.main span, .kpi.main small { color: var(--ink-2); }
+.kpi.main[aria-pressed="true"] { outline-color: var(--wu-soft); outline-offset: 2px; }
+
+/* Меню експорту */
+.menu { position: relative; }
+.menu summary { list-style: none; }
+.menu summary::-webkit-details-marker { display: none; }
+.menu-list { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: 340px; padding: 8px; border-radius: 14px; background: var(--card); color: var(--ink); box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+.menu-list button { display: block; width: 100%; padding: 10px 12px; border: none; border-radius: 10px; background: none; text-align: left; cursor: pointer; }
+.menu-list button:hover:not(:disabled) { background: var(--bg); }
+.menu-list button:disabled { opacity: .45; cursor: default; }
+.menu-list b { display: block; font-weight: 600; }
+.menu-list small { color: var(--ink-3); }
+
+/* Список */
+.body { padding: 22px 0 64px; }
+.listhead { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 14px 0 6px; }
+.types { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; box-shadow: inset 0 -2px var(--line); }
+.types button { padding: 9px 14px; border: none; border-bottom: 2px solid transparent; background: none; color: var(--ink-2); font-weight: 600; cursor: pointer; }
+.types button:hover { color: var(--ink); }
+.types button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--wu); }
+.types em { font-style: normal; font-weight: 500; color: var(--ink-3); margin-left: 6px; }
+.types small { display: block; font-size: 11px; font-weight: 500; color: var(--ink-3); text-align: left; }
+@media (max-width: 640px) { .types { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .types button { flex: none; } }
+.subtypes { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 12px; }
+.subtypes button { padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink-2); font-size: 13px; font-weight: 500; cursor: pointer; }
+.subtypes button:hover { border-color: var(--ink-3); color: var(--ink); }
+.subtypes button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.subtypes em { font-style: normal; opacity: .6; margin-left: 5px; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-bottom: 14px; }
+.segments { display: flex; gap: 2px; padding: 4px; border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
+.segments button { padding: 7px 11px; border: none; border-radius: 9px; background: none; color: var(--ink-2); font-weight: 500; cursor: pointer; }
+.segments button:hover { color: var(--ink); }
+.segments button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.search { width: 320px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+.filter { display: inline-flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; border-radius: 10px; background: var(--wu-soft); font-weight: 500; }
+.filter button { padding: 2px 8px; border: none; border-radius: 7px; background: var(--card); cursor: pointer; }
+
+.grid { display: grid; grid-template-columns: minmax(260px, 1fr) 28px minmax(260px, 1fr) 210px; gap: 16px; align-items: center; }
+.colhead { padding: 0 18px 8px; color: var(--ink-3); font-size: 12px; font-weight: 600; }
+.items { display: grid; gap: 10px; }
+.item { padding: 14px 18px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
+.side { min-width: 0; }
+.side .brand { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; font-size: 17px; font-weight: 700; }
+.side .brand small { font-size: 11px; font-weight: 500; color: var(--ink-3); }
+.side .brand .empty-val { color: var(--bad); font-weight: 600; font-size: 14px; }
+.side .name { margin-top: 2px; color: var(--ink-2); }
+.side .meta { margin-top: 3px; color: var(--ink-3); font-size: 12px; }
+.side a { color: var(--ink-2); font-weight: 600; text-decoration: none; padding: 1px 6px; margin-left: -6px; border-radius: 6px; }
+.side a:hover { background: var(--wu-soft); color: var(--ink); }
+.arrow { color: var(--ink-3); font-size: 18px; text-align: center; }
+.c-type { display: grid; justify-items: end; gap: 6px; text-align: right; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--soft); color: var(--ink-2); }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.c-type small { color: var(--ink-3); font-size: 12px; }
+
+.pgrid { display: grid; grid-template-columns: minmax(300px, 1fr) 210px 70px 220px; gap: 16px; align-items: center; }
+.pair { padding: 10px 18px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
+.side-head .pair-open { flex: 1; min-width: 0; }
+.pair-open { display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 8px; align-items: center; padding: 6px 8px; margin-left: -8px; border: none; border-radius: 10px; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+.pair-open:hover { background: var(--wu-soft); }
+.pair b { font-size: 16px; overflow-wrap: anywhere; }
+.pair .n { font-size: 18px; font-weight: 700; text-align: right; }
+
+/* Рішення: статус і коментар */
+.decide { display: grid; gap: 4px; justify-items: end; }
+.status { max-width: 220px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.status:hover { border-color: var(--ink-3); }
+.status[data-st="same"] { background: #e8f6ee; border-color: #bfe5cd; color: var(--ok); }
+.status[data-st="fix_ref"], .status[data-st="fix_tab"] { background: var(--bad-soft); border-color: #f5c6c0; color: var(--bad); }
+.status[data-st="question"] { background: var(--warn-soft); border-color: #f0d9b0; color: var(--warn); }
+.inherit { font-size: 11px; color: var(--ink-3); }
+.note { grid-column: 1 / -1; }
+.note input { width: 100%; padding: 6px 10px; border: 1px solid transparent; border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; font-size: 13px; }
+.note input:hover { border-color: var(--line); }
+.note input:focus { border-color: var(--ink); background: var(--card); outline: none; box-shadow: 0 0 0 3px var(--wu-soft); }
+.item.st-same { opacity: .6; }
+.chip.suspect { background: var(--ink); color: #fff; }
+.fixbrand { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
+.fixbrand span { flex: none; font-size: 12px; font-weight: 600; color: var(--bad); }
+.fixbrand input { flex: 1; padding: 6px 10px; border: 1px solid #f5c6c0; border-radius: 8px; background: var(--card); font: inherit; font-size: 13px; }
+.pick { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-weight: 500; cursor: pointer; }
+.pick input, .sel { width: 16px; height: 16px; accent-color: var(--ink); cursor: pointer; }
+.item.selected, .pair.selected { box-shadow: inset 0 0 0 2px var(--ink), var(--shadow); }
+.side-head { display: flex; align-items: flex-start; gap: 10px; }
+.bulk { position: fixed; left: 50%; bottom: 24px; z-index: 25; transform: translateX(-50%); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 14px; background: var(--ink); color: #fff; box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+.bulk select { padding: 7px 10px; border-radius: 9px; border: none; font: inherit; font-weight: 600; }
+.bulk button { padding: 7px 12px; border: none; border-radius: 9px; background: var(--wu); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.bulk button:disabled { opacity: .4; cursor: default; }
+.bulk button.quiet { background: none; color: #fff; text-decoration: underline; font-weight: 500; }
+body.has-bulk .toast { bottom: 96px; }
+.toast .undo { margin-left: 10px; padding: 0; border: none; background: none; color: var(--wu); font-weight: 600; text-decoration: underline; cursor: pointer; }
+.menu-list label { display: block; width: 100%; padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+.menu-list label:hover { background: var(--bg); }
+.menu-list hr { border: none; border-top: 1px solid var(--line); margin: 6px 4px; }
+.menu-list .danger { color: var(--bad); }
+.who { cursor: default !important; }
+.who:hover { background: none !important; }
+.who input { width: 100%; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+.filter-status { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font: inherit; }
+
+.more { display: flex; justify-content: center; margin-top: 18px; }
+.empty { padding: 56px 16px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow); text-align: center; color: var(--ink-2); }
+.empty b { display: block; font-size: 17px; color: var(--ink); margin-bottom: 6px; }
+.toast { position: fixed; right: 24px; bottom: 24px; z-index: 30; max-width: 420px; padding: 12px 16px; border-radius: 12px; background: var(--ink); color: #fff; box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+.toast.error { background: var(--bad); }
+
+@media (max-width: 1100px) {
+  .wrap { padding: 0 20px; }
+  .hero-grid { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr 28px 1fr; }
+  .grid > .c-type { grid-column: 1 / -1; justify-items: start; text-align: left; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .colhead .h-type { display: none; }
+  .search { width: 100%; }
+  .decide { justify-items: start; }
+  .pgrid { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .pgrid > .side-head { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .wrap { padding: 0 16px; }
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .grid, .pgrid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .arrow { text-align: left; transform: rotate(90deg); width: 18px; }
+  .colhead { display: none; }
+  .pair .n { text-align: left; }
+  .pgrid { grid-template-columns: minmax(0, 1fr); }
+  .status { max-width: none; width: 100%; }
+  .decide { justify-items: stretch; width: 100%; }
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <span class="logo">WU</span>
+      <h1>Розбіжності брендів: еталон і Tabletki.ua</h1>
+      <span class="spacer"></span>
+      <details class="menu" id="export-menu">
+        <summary class="btn wu">Експорт в Excel</summary>
+        <div class="menu-list">
+          <label class="who"><b>Хто перевіряє</b><small>Ім'я потрапить у рішення.</small><input id="reviewer" autocomplete="name" placeholder="Ім'я та прізвище"></label>
+          <hr>
+          <button data-export="full" disabled><b>Повний звіт</b><small>Розбіжності з типом і статусом, пари брендів, зведення. Товари з «Не помилка» не входять.</small></button>
+          <button data-export="view" disabled><b>Поточний список</b><small>Лише товари, які зараз видно з урахуванням фільтрів.</small></button>
+          <button data-export="fixes" disabled><b>Виправлення для DWH</b><small>Еталони зі статусом «Виправити в еталоні»: ID, бренд зараз, правильний бренд.</small></button>
+          <hr>
+          <button data-export="save"><b>Зберегти рішення у файл</b><small id="save-note">Статуси й коментарі. Також зберігаються в цьому браузері. Файл для скрипта: data/decisions.json.</small></button>
+          <label><b>Завантажити рішення з файлу</b><small>Додає рішення з файлу .json до наявних, файл має перевагу.</small><input id="load" type="file" accept=".json" hidden></label>
+          <button data-export="clear" class="danger"><b>Видалити всі рішення</b></button>
+        </div>
+      </details>
+    </div>
+
+    <div class="hero-grid">
+      <label class="drop" id="drop">
+        <input id="file" type="file" accept=".xlsx" multiple hidden>
+        <b>Перетягніть сюди обидва вивантаження</b>
+        <span class="hint">Або натисніть і виберіть два файли .xlsx. Тип файлу визначається за заголовками. Файли обробляються в цьому браузері й нікуди не надсилаються.</span>
+        <div class="slots">
+          <div class="slot"><span>Еталонні товари:</span><em id="slot-ref" class="none">не вибрано</em></div>
+          <div class="slot"><span>Товари Tabletki:</span><em id="slot-tab" class="none">не вибрано</em></div>
+        </div>
+        <div class="progress" id="progress" hidden><span></span></div>
+        <span class="stage" id="stage" hidden></span>
+        <span class="error" id="error" hidden></span>
+      </label>
+      <div class="kpis">
+        <div class="kpi"><span>Перевірено зіставлених</span><b id="k-checked">—</b><small id="k-checked-note">товарів Tabletki</small></div>
+        <button class="kpi main" data-group="Різні бренди" disabled><span>Різні бренди</span><b id="k-main">—</b><small id="k-main-note">головний список на опрацювання</small></button>
+        <button class="kpi" data-group="Потребують уваги" disabled><span>Потребують уваги</span><b id="k-attention">—</b><small id="k-attention-note">описки, виробник замість бренду, порожні</small></button>
+        <button class="kpi" data-group="Схоже на норму" disabled><span>Схоже на норму</span><b id="k-norm">—</b><small id="k-norm-note">інше написання, серія, словоформа</small></button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="body">
+  <div class="wrap">
+    <section class="empty" id="start">
+      <b>Завантажте два вивантаження, щоб побачити розбіжності</b>
+      Еталонні товари (product-…xlsx) і товари Tabletki (source-product-…xlsx). Перевіряються лише товари зі статусом «Сопоставлено».
+    </section>
+
+    <section id="results" hidden>
+      <div class="listhead">
+        <div class="types" id="groups" role="group" aria-label="Група розбіжностей"></div>
+        <div class="subtypes" id="types" role="group" aria-label="Тип розбіжності"></div>
+        <div class="toolbar">
+          <div class="segments" role="group" aria-label="Вигляд">
+            <button data-view="items" aria-pressed="true">Товари</button>
+            <button data-view="pairs" aria-pressed="false">Пари брендів</button>
+          </div>
+          <input class="search" id="search" type="search" placeholder="Пошук за ID, назвою або брендом" aria-label="Пошук">
+          <select class="filter-status" id="filter-status" aria-label="Статус опрацювання">
+            <option value="open">Без «Не помилка»</option>
+            <option value="todo">Не опрацьовані</option>
+            <option value="done">Опрацьовані</option>
+            <option value="same">Не помилка</option>
+            <option value="all">Усі</option>
+          </select>
+          <label class="pick"><input type="checkbox" id="only-suspect"> <span id="suspect-label">Лише підозра на хибне зіставлення</span></label>
+          <label class="pick"><input type="checkbox" id="select-all"> Вибрати всі в списку</label>
+          <span class="filter" id="pair-filter" hidden></span>
+          <span class="spacer"></span>
+          <span class="muted" id="count"></span>
+        </div>
+        <div class="grid colhead" id="colhead">
+          <span>Товар Tabletki</span><span></span><span>Еталонний товар</span><span class="h-type" style="text-align:right">Тип і статус</span>
+        </div>
+      </div>
+      <div class="items" id="items"></div>
+      <div class="empty" id="nothing" hidden><b>Нічого не знайдено</b>Змініть тип або пошуковий запит.</div>
+      <div class="more"><button class="btn" id="more" hidden></button></div>
+    </section>
+  </div>
+</main>
+
+<div class="bulk" id="bulk" hidden>
+  <b id="bulk-count"></b>
+  <select id="bulk-status" aria-label="Статус для вибраних"></select>
+  <button id="bulk-apply">Застосувати</button>
+  <button class="quiet" id="bulk-clear">Зняти вибір</button>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script type="module">
+/* === check:start ===
+   Читання вивантажень і перевірка. Без DOM: tests/parity.mjs вирізає код між мітками check:start
+   і check:end і запускає його в Node на тих самих файлах, що й Python. Правила:
+   .wiki/decisions/brand-compare.md, еталон — tool/brandcheck. */
+
+export const BOTH_EMPTY = "Немає бренду в обох";
+export const NO_TAB = "Немає бренду Tabletki";
+export const NO_TAB_IN_NAME = "Немає бренду Tabletki, бренд еталона в назві";
+export const NO_REF = "Немає бренду еталона";
+export const MATCH = "Збігається";
+export const CASE = "Регістр, знаки, схожі літери";
+export const TRANSLIT = "Кирилиця / латиниця";
+export const SERIES = "Серія бренду";
+export const SUFFIX = "Бренд з доповненням";
+export const SUFFIX_MAKER = "Доповнення = виробник еталона";
+export const IN_NAME = "Бренд еталона в назві Tabletki";
+export const UA_RU = "Укр / рос написання";
+export const WORD_FORM = "Словоформа";
+export const TYPO = "Можлива описка";
+export const SHARED_WORD = "Спільне слово в брендах";
+export const TAB_MAKER = "Tabletki: виробник замість бренду";
+export const REF_MAKER = "Еталон: виробник замість бренду";
+export const LINE = "Бренд Tabletki в назві DWH";
+export const DIFFERENT = "Різні бренди";
+export const NO_REF_ROW = "Еталон не знайдено у вивантаженні";
+// Групи для відбору: головний список, потребують уваги, схоже на норму. Нічого не ховається.
+export const MAIN = "Різні бренди", ATTENTION = "Потребують уваги", NORM = "Схоже на норму";
+export const GROUPS = {
+  [MAIN]: [DIFFERENT],
+  [ATTENTION]: [TYPO, REF_MAKER, LINE, NO_TAB, NO_REF, BOTH_EMPTY, IN_NAME, SUFFIX, NO_REF_ROW],
+  [NORM]: [TAB_MAKER, SHARED_WORD, WORD_FORM, UA_RU, NO_TAB_IN_NAME, SUFFIX_MAKER, SERIES, TRANSLIT, CASE],
+};
+export const GROUP = Object.fromEntries(Object.entries(GROUPS).flatMap(([g, ts]) => ts.map(t => [t, g])));
+export const TYPES = Object.values(GROUPS).flat();
+
+const BRAND_KEYS = ["Бренд", "Торговое название"];
+const GLYPH = Object.fromEntries([..."авекмнорстухі"].map((c, i) => [c, "abekmhopctyxi"[i]]));
+const CYR_TO = ["a", "b", "v", "g", "d", "e", "zh", "z", "i", "k", "l", "m", "n", "o", "p", "r",
+  "s", "t", "u", "f", "h", "ts", "ch", "sh", "sch", "", "y", "", "e", "yu", "ya", "i", "i", "e", "g"];
+const CYR = Object.fromEntries([..."абвгдежзиклмнопрстуфхцчшщъыьэюяіїєґ"].map((c, i) => [c, CYR_TO[i]]));
+
+export function tabBrand(characteristics) {
+  const found = {};
+  for (const part of characteristics.split(" | ")) {
+    const at = part.indexOf(":");
+    if (at < 0) continue;
+    const key = part.slice(0, at).trim();
+    if (BRAND_KEYS.includes(key) && !(key in found)) found[key] = part.slice(at + 1).trim();
+  }
+  for (const key of BRAND_KEYS) if (found[key]) return [found[key], key];
+  return ["", ""];
+}
+
+const simple = s => s.trim().toLowerCase().replace(/\s+/g, " ");
+export const base = s => s.normalize("NFKD").toLowerCase().replace(/ё/g, "е").replace(/[^0-9a-zа-яіїєґ]/g, "");
+export const glyph = s => [...base(s)].map(c => GLYPH[c] ?? c).join("");
+export function translit(s) {
+  let t = [...base(s)].map(c => CYR[c] ?? c).join("");
+  t = t.replaceAll("ph", "f").replaceAll("qu", "kv").replaceAll("w", "v").replaceAll("x", "ks").replaceAll("ck", "k");
+  t = t.replace(/c(?=[eiy])/g, "s").replaceAll("c", "k").replaceAll("q", "k").replaceAll("y", "i").replaceAll("j", "i");
+  t = t.replaceAll("h", "");
+  return t.replace(/(.)\1+/g, "$1");
+}
+function prefix(a, b) {
+  const [s, l] = a.length <= b.length ? [a, b] : [b, a];
+  return s.length >= 3 && l.startsWith(s);
+}
+export const words = s => s.toLowerCase().replace(/ё/g, "е").match(/[0-9a-zа-яіїєґ]+/g) ?? [];
+const uaRu = s => translit(s).replace(/[iey]/g, "i").replace(/(.)\1+/g, "$1");
+export function firstStem(s) {
+  const w = words(s).find(x => x.length >= 3);
+  return w ? translit(w.replace(/(ами|ями|ого|его|ой|ей|ый|ий|ая|яя|ое|ее|ы|и|а|я|е|у|ю|ь)$/, "")) : "";
+}
+export function lev(a, b) {
+  if (Math.abs(a.length - b.length) > 3) return 99;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur.push(Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] !== b[j - 1])));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+function within(a, b) { const ta = translit(a); return ta.length >= 4 && translit(b).includes(ta); }
+function suffixIsRefMaker(tab, ref, refMaker) {
+  const ta = translit(tab), tb = translit(ref);
+  const [longRaw, shortT] = ta.length >= tb.length ? [tab, tb] : [ref, ta];
+  const rm = translit(refMaker);
+  const extra = words(longRaw).filter(w => w.length >= 4).map(translit);
+  return !!rm && extra.some(e => e.length >= 3 && !shortT.includes(e) && rm.includes(e.slice(0, 5)));
+}
+const longWords = s => new Set(words(s).filter(w => w.length >= 4).map(translit));
+
+export function classify(tab, ref, series = "", tabName = "", refName = "", tabMaker = "", refMaker = "") {
+  tab = tab.trim(); ref = ref.trim();
+  if (!tab && !ref) return BOTH_EMPTY;
+  if (!tab) { const tr = translit(ref); return tr.length >= 3 && translit(tabName).includes(tr) ? NO_TAB_IN_NAME : NO_TAB; }
+  if (!ref) return NO_REF;
+  if (simple(tab) === simple(ref)) return MATCH;
+  if (base(tab) === base(ref) || glyph(tab) === glyph(ref)) return CASE;
+  const t = translit(tab), r = translit(ref);
+  if (t === r) return TRANSLIT;
+  if (series.trim() && [base, glyph, translit].some(f => f(tab) === f(series))) return SERIES;
+  if (prefix(glyph(tab), glyph(ref)) || prefix(t, r)) return suffixIsRefMaker(tab, ref, refMaker) ? SUFFIX_MAKER : SUFFIX;
+  for (const f of [translit, glyph]) {
+    const fr = f(ref);
+    if (fr.length >= 4 && f(tabName).includes(fr)) return IN_NAME;
+  }
+  // Підтипи «різних брендів»: замір .wiki/measurements/2026-11-21-rule-candidates.md.
+  if (uaRu(tab) === uaRu(ref)) return UA_RU;
+  const st = firstStem(tab);
+  if (st.length >= 4 && st === firstStem(ref)) return WORD_FORM;
+  if (Math.min(t.length, r.length) >= 6 && lev(t, r) <= 2) return TYPO;
+  const rw = longWords(ref);
+  if ([...longWords(tab)].some(w => rw.has(w))) return SHARED_WORD;
+  if (within(tab, refMaker) || within(refMaker, tab)) return TAB_MAKER;
+  if (within(ref, tabMaker) || within(tabMaker, ref)) return REF_MAKER;
+  if (within(tab, refName)) return LINE;
+  return DIFFERENT;
+}
+
+/* --- читання xlsx потоком: тільки потрібні стовпці, без завантаження файлу в пам'ять --- */
+const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+export const unescapeXml = s => s.includes("&") ? s.replace(/&(amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);/g, (_, e) =>
+  ENT[e] ?? String.fromCodePoint(e[1] === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10))) : s;
+
+function cellValue(attrs, inner, shared) {
+  if (!inner) return "";
+  if (attrs.includes('t="s"')) {
+    const v = inner.match(/<v>([\s\S]*?)<\/v>/);
+    if (!shared || !v || !/^\d+$/.test(v[1]) || +v[1] >= shared.length) throw new Error("Клітинка посилається на спільну таблицю рядків, якої немає у файлі. Файл пошкоджений.");
+    return shared[+v[1]];
+  }
+  if (attrs.includes('t="inlineStr"')) return unescapeXml([...inner.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(m => m[1]).join(""));
+  const v = inner.match(/<v>([\s\S]*?)<\/v>/);
+  return v ? unescapeXml(v[1]) : "";
+}
+
+export function parseRow(row, want, shared) {
+  const out = {};
+  for (const m of row.matchAll(/<c r="([A-Z]+)\d+"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+    if (!want || want.has(m[1])) out[m[1]] = cellValue(m[2], m[3], shared);
+  }
+  return out;
+}
+
+// Каталог zip: назва → {method, size, usize, offset}.
+async function zipEntries(file) {
+  const tailSize = Math.min(file.size, 66000);
+  const tail = new DataView(await file.slice(file.size - tailSize).arrayBuffer());
+  let eocd = -1;
+  for (let i = tailSize - 22; i >= 0; i--) if (tail.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error(`${file.name}: це не файл .xlsx.`);
+  const cdSize = tail.getUint32(eocd + 12, true), cdOffset = tail.getUint32(eocd + 16, true);
+  if (cdOffset === 0xffffffff) throw new Error(`${file.name}: файл понад 4 ГБ (zip64) не підтримано.`);
+  const cd = new DataView(await file.slice(cdOffset, cdOffset + cdSize).arrayBuffer());
+  const dec = new TextDecoder();
+  const entries = new Map();
+  for (let p = 0; p + 46 <= cd.byteLength && cd.getUint32(p, true) === 0x02014b50;) {
+    const n = cd.getUint16(p + 28, true), x = cd.getUint16(p + 30, true), k = cd.getUint16(p + 32, true);
+    entries.set(dec.decode(new Uint8Array(cd.buffer, p + 46, n)), {
+      method: cd.getUint16(p + 10, true), size: cd.getUint32(p + 20, true), usize: cd.getUint32(p + 24, true),
+      offset: cd.getUint32(p + 42, true) });
+    p += 46 + n + x + k;
+  }
+  return entries;
+}
+
+// Шматки XML між кінцями елементів end (</row>, </si>). onBytes(прочитано, усього) — розпаковані байти:
+// розпаковувач забирає стиснені байти із запасом, тому за ними прогрес біжить уперед.
+async function* chunks(file, e, end, onBytes = () => {}) {
+  const lh = new DataView(await file.slice(e.offset, e.offset + 30).arrayBuffer());
+  const start = e.offset + 30 + lh.getUint16(26, true) + lh.getUint16(28, true);
+  let stream = file.slice(start, start + e.size).stream();
+  if (e.method === 8) stream = stream.pipeThrough(new DecompressionStream("deflate-raw"));
+  else if (e.method !== 0) throw new Error(`${file.name}: невідомий спосіб стиснення.`);
+  let read = 0;
+  const reader = stream.pipeThrough(new TransformStream({
+    transform(chunk, ctl) { read += chunk.byteLength; onBytes(read, e.usize || 1); ctl.enqueue(chunk); } }))
+    .pipeThrough(new TextDecoderStream()).getReader();
+  let buf = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (value) buf += value;
+    let from = 0, stop;
+    while ((stop = buf.indexOf(end, from)) !== -1) { yield buf.slice(from, stop); from = stop + end.length; }
+    buf = buf.slice(from);
+    if (done) return;
+  }
+}
+
+// Відкритий аркуш: сирі рядки (вміст між <row> і </row>) і спільна таблиця рядків, якщо файл
+// пересохранили в Excel (t="s"). Вивантаження DWH пишуть рядки прямо в клітинках.
+async function openSheet(file) {
+  const entries = await zipEntries(file);
+  const sheets = [...entries.keys()].filter(n => /^xl\/worksheets\/sheet[^/]*\.xml$/.test(n)).sort();
+  if (!sheets.length) throw new Error(`${file.name}: у файлі немає аркуша. Це не вивантаження .xlsx.`);
+  let shared = null;
+  const sst = entries.get("xl/sharedStrings.xml");
+  if (sst) {
+    shared = [];
+    for await (const item of chunks(file, sst, "</si>")) {
+      const at = item.lastIndexOf("<si");
+      if (at !== -1) shared.push(unescapeXml([...item.slice(at).replace(/<rPh\b[\s\S]*?<\/rPh>/g, "")
+        .matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(m => m[1]).join("")));
+    }
+  }
+  return { shared, rows: onBytes => chunks(file, entries.get(sheets[0]), "</row>", onBytes) };
+}
+
+export async function* rawRows(file, onBytes) {
+  yield* (await openSheet(file)).rows(onBytes);
+}
+
+export const REF_COLS = ["ID эталонного товара", "Название товара DWH", "Статус", "Производитель", "Бренд", "Серия бренда"];
+export const TAB_COLS = ["Id товара источника", "Id Товара в базе источника", "Название", "Ссылка на сайт", "Производитель",
+  "Статус сопоставления", "Id DWH связанного товара", "Характеристики"];
+export const REF_LINK = "https://apis-data.com/products/product/";
+
+// "ref" або "tab" за заголовком. Одразу перевіряє, що є всі потрібні стовпці.
+export async function detect(file) {
+  const sheet = await openSheet(file);
+  for await (const row of sheet.rows()) {
+    const names = new Set(Object.values(parseRow(row, null, sheet.shared)).map(v => v.trim()));
+    const kind = names.has(REF_COLS[0]) ? "ref" : names.has(TAB_COLS[0]) ? "tab" : null;
+    if (!kind) break;
+    const missing = (kind === "ref" ? REF_COLS : TAB_COLS).filter(n => !names.has(n));
+    if (missing.length) throw new Error(`${file.name}: немає стовпців: ${missing.join(", ")}`);
+    return kind;
+  }
+  throw new Error(`${file.name}: не схоже ні на вивантаження еталонів, ні на вивантаження Tabletki.`);
+}
+
+// Рядки як {назва стовпця: значення}. Перший рядок — заголовок.
+export async function* readColumns(file, names, onBytes) {
+  const sheet = await openSheet(file);
+  let letter = null, want = null;
+  for await (const raw of sheet.rows(onBytes)) {
+    if (!letter) {
+      const by = {};
+      for (const [c, v] of Object.entries(parseRow(raw, null, sheet.shared))) by[v.trim()] = c;
+      const missing = names.filter(n => !(n in by));
+      if (missing.length) throw new Error(`${file.name}: немає стовпців: ${missing.join(", ")}`);
+      letter = names.map(n => [n, by[n]]);
+      want = new Set(letter.map(x => x[1]));
+      continue;
+    }
+    const cells = parseRow(raw, want, sheet.shared);
+    const row = {};
+    for (const [n, c] of letter) row[n] = cells[c] ?? "";
+    yield row;
+  }
+  if (!letter) throw new Error(`${file.name}: аркуш порожній.`);
+}
+
+// Підозра на хибне зіставлення: у назв і у виробників немає жодного спільного значущого слова.
+const STOP_WORDS = new Set(`таблетки капсулы раствор крем гель мазь спрей капли сироп порошок флакон блистер
+упаковка штук масло для по во мл шт пак бан табл кап обол плен иньекций инфузий наружного
+применения детский детская детей`.split(/\s+/));
+const keys = s => new Set(words(s).filter(w => w.length >= 4 && !STOP_WORDS.has(w)).map(w => translit(w).slice(0, 5)).filter(Boolean));
+export function suspectMatch(tabName, refName, tabMaker, refMaker) {
+  const a = keys(tabName), b = keys(refName);
+  if (!a.size || !b.size || [...a].some(k => b.has(k))) return false;
+  const mb = keys(refMaker);
+  return ![...keys(tabMaker)].some(k => mb.has(k));
+}
+
+export function checkRow(t, refs) {
+  const [brand, key] = tabBrand(t["Характеристики"]);
+  const refId = t["Id DWH связанного товара"].trim();
+  let ref = refs.get(refId), type;
+  if (!ref) { type = NO_REF_ROW; ref = Object.fromEntries(REF_COLS.map(c => [c, ""])); }
+  else type = classify(brand, ref["Бренд"], ref["Серия бренда"], t["Название"], ref["Название товара DWH"],
+    t["Производитель"], ref["Производитель"]);
+  return {
+    type, tabId: t["Id товара источника"], tabCode: t["Id Товара в базе источника"], tabName: t["Название"],
+    tabBrand: brand, tabBrandKey: key, tabMaker: t["Производитель"], tabLink: t["Ссылка на сайт"],
+    refId, refName: ref["Название товара DWH"], refBrand: ref["Бренд"].trim(), refSeries: ref["Серия бренда"],
+    refMaker: ref["Производитель"], refStatus: ref["Статус"], refLink: refId ? REF_LINK + refId : "",
+    suspect: type !== NO_REF_ROW && suspectMatch(t["Название"], ref["Название товара DWH"], t["Производитель"], ref["Производитель"]),
+  };
+}
+
+// onProgress(етап, частка 0..1). Етап: "ref" або "tab".
+export async function runCheck(refFile, tabFile, onProgress = () => {}) {
+  const refs = new Map();
+  for await (const r of readColumns(refFile, REF_COLS, (a, b) => onProgress("ref", a / b))) {
+    const id = r[REF_COLS[0]].trim();
+    if (id) refs.set(id, r);
+  }
+  let tabTotal = 0;
+  const rows = [], counts = Object.fromEntries([MATCH, ...TYPES].map(t => [t, 0]));
+  for await (const t of readColumns(tabFile, TAB_COLS, (a, b) => onProgress("tab", a / b))) {
+    tabTotal++;
+    if (t["Статус сопоставления"].trim() !== "Сопоставлено") continue;
+    const r = checkRow(t, refs);
+    counts[r.type]++;
+    if (r.type !== MATCH) rows.push(r);
+  }
+  const order = Object.fromEntries(TYPES.map((t, i) => [t, i]));
+  const cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+  rows.sort((a, b) => order[a.type] - order[b.type] || cmp(a.refBrand.toLowerCase(), b.refBrand.toLowerCase())
+    || cmp(a.tabBrand.toLowerCase(), b.tabBrand.toLowerCase()) || cmp(a.tabId, b.tabId));
+  const checked = Object.values(counts).reduce((s, n) => s + n, 0);
+  return { tabTotal, checked, counts, rows };
+}
+/* --- рішення перевіряючого: tool/brandcheck/decisions.py --- */
+export const STATUSES = { same: "Не помилка", fix_ref: "Виправити в еталоні", fix_tab: "Виправити на Tabletki", question: "Під питанням" };
+export const NONE = "Не опрацьовано";
+export const pairKey = (tab, ref) => `${simple(tab)} → ${simple(ref)}`;
+// [статус, коментар, джерело 'item' | 'pair' | '', правильний бренд]. Рішення по товару сильніше за рішення по парі.
+export function effective(tabId, tabBrand, refBrand, d) {
+  for (const [source, rec] of [["item", d.items[tabId]], ["pair", d.pairs[pairKey(tabBrand, refBrand)]]]) {
+    if (rec && rec.status in STATUSES) return [rec.status, rec.note ?? "", source, rec.brand ?? ""];
+  }
+  return ["", "", "", ""];
+}
+/* === check:end === */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const fmt = n => n.toLocaleString("uk-UA");
+const today = () => new Date().toISOString().slice(0, 10);
+const PAGE = 200;
+const HINT = {
+  [DIFFERENT]: "основний список", [TYPO]: "Витаджен / Vitagen", [REF_MAKER]: "Звездочка / Фармаком",
+  [LINE]: "Omnifix / Paul Hartmann", [NO_TAB]: "порожній у Tabletki", [NO_REF]: "порожній в еталоні",
+  [BOTH_EMPTY]: "порожній скрізь", [IN_NAME]: "є в назві Tabletki", [SUFFIX]: "-Фармак, форте", [NO_REF_ROW]: "немає в еталонах",
+  [TAB_MAKER]: "Фитобиотехнологии / Organic Herbs", [SHARED_WORD]: "The Doctor / Домашний Доктор", [WORD_FORM]: "Календулы / Календула",
+  [UA_RU]: "Білосніжка / Белоснежка", [NO_TAB_IN_NAME]: "бренд є в назві", [SUFFIX_MAKER]: "Now Foods / Now",
+  [SERIES]: "= серія еталона", [TRANSLIT]: "Леда / Leda", [CASE]: "Dr. Frei / Dr.Frei",
+};
+const GROUP_CHIP = { [MAIN]: "bad", [ATTENTION]: "warn", [NORM]: "" };
+const CHIP = Object.fromEntries(TYPES.map(t => [t, GROUP_CHIP[GROUP[t]]]));
+const SOURCE = { item: "товар", pair: "пара", "": "" };
+
+/* --- рішення: у браузері (localStorage) і у файлі JSON --- */
+const STORE = "brandcheck.decisions.v1", WHO = "brandcheck.reviewer";
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } },
+};
+function loadDecisions() {
+  try {
+    const d = JSON.parse(store.get(STORE) || "null");
+    if (d && d.version === 1) return { version: 1, pairs: d.pairs || {}, items: d.items || {} };
+  } catch {}
+  return { version: 1, pairs: {}, items: {} };
+}
+let decisions = loadDecisions();
+function saveDecisions() {
+  if (!store.set(STORE, JSON.stringify(decisions))) toast("Браузер не дає зберегти рішення. Збережіть їх у файл.", true);
+}
+const eff = r => effective(r.tabId, r.tabBrand, r.refBrand, decisions);
+
+function setDecision(scope, key, status, note, brand) {
+  const map = decisions[scope];
+  const prev = map[key] ? { ...map[key] } : null;
+  const rec = { ...(map[key] || {}) };
+  if (status !== undefined) rec.status = status;
+  if (note !== undefined) rec.note = note;
+  if (brand !== undefined) rec.brand = brand;
+  if (!rec.status && !rec.note && !rec.brand) delete map[key];
+  else map[key] = { ...rec, by: $("reviewer").value.trim(), at: today() };
+  saveDecisions();
+  return prev;
+}
+function restore(scope, key, prev) {
+  if (prev) decisions[scope][key] = prev; else delete decisions[scope][key];
+  saveDecisions();
+}
+
+const files = { ref: null, tab: null };
+let pairCount = new Map();
+const state = { result: null, group: MAIN, type: "", view: "items", onlySuspect: false, selected: new Set(), query: "", pair: null, status: "open", shown: PAGE, sources: [] };
+
+function toast(text, error = false, undo = null) {
+  const t = $("toast");
+  t.innerHTML = esc(text) + (undo ? ` <button class="undo">Скасувати</button>` : "");
+  t.className = "toast" + (error ? " error" : ""); t.hidden = false;
+  if (undo) t.querySelector(".undo").onclick = () => { undo(); t.hidden = true; };
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.hidden = true, undo ? 8000 : 5000);
+}
+function showError(text) { $("error").textContent = text; $("error").hidden = !text; }
+function setSlot(kind, name, done) {
+  const el = $("slot-" + kind);
+  el.textContent = name || "не вибрано";
+  el.className = name ? (done ? "done" : "") : "none";
+}
+
+async function takeFiles(list) {
+  showError("");
+  for (const f of list) {
+    try { const kind = await detect(f); files[kind] = f; setSlot(kind, f.name, false); }
+    catch (e) { showError(e.message); }
+  }
+  if (files.ref && files.tab) run();
+  else if (files.ref || files.tab) { $("stage").hidden = false; $("stage").textContent = "Додайте друге вивантаження."; }
+}
+
+async function run() {
+  const bar = $("progress"), stage = $("stage");
+  bar.hidden = false; stage.hidden = false;
+  const t0 = performance.now();
+  let last = 0;
+  try {
+    const result = await runCheck(files.ref, files.tab, (kind, part) => {
+      const now = performance.now();
+      if (now - last < 120) return;
+      last = now;
+      const total = kind === "ref" ? part * 0.35 : 0.35 + part * 0.65;
+      bar.firstElementChild.style.width = (total * 100).toFixed(1) + "%";
+      stage.textContent = (kind === "ref" ? "Читаю еталонні товари" : "Читаю товари Tabletki і порівнюю") + ` · ${Math.round(part * 100)}%`;
+    });
+    bar.firstElementChild.style.width = "100%";
+    setSlot("ref", files.ref.name, true); setSlot("tab", files.tab.name, true);
+    stage.textContent = `Готово за ${Math.round((performance.now() - t0) / 1000)} с.`;
+    state.result = result; state.sources = [files.ref.name, files.tab.name];
+    pairCount = new Map();
+    for (const r of result.rows) { const k = pairKey(r.tabBrand, r.refBrand); pairCount.set(k, (pairCount.get(k) || 0) + 1); }
+    state.group = MAIN; state.type = ""; state.pair = null; state.shown = PAGE;
+    document.querySelectorAll("[data-export=full], [data-export=view], [data-export=fixes]").forEach(b => b.disabled = false);
+    $("start").hidden = true; $("results").hidden = false;
+    renderAll();
+  } catch (e) {
+    showError(e.message); stage.hidden = true;
+  } finally {
+    setTimeout(() => bar.hidden = true, 600);
+  }
+}
+
+function renderAll() { renderKpis(); renderTypes(); renderList(); }
+
+function renderKpis() {
+  const { result } = state;
+  const n = { [MAIN]: 0, [ATTENTION]: 0, [NORM]: 0 }, done = { [MAIN]: 0, [ATTENTION]: 0, [NORM]: 0 };
+  for (const r of result.rows) {
+    const [st] = eff(r);
+    if (st === "same") continue;
+    n[GROUP[r.type]]++;
+    if (st) done[GROUP[r.type]]++;
+  }
+  $("k-checked").textContent = fmt(result.checked);
+  $("k-checked-note").textContent = `з ${fmt(result.tabTotal)} товарів Tabletki, бренд збігається у ${fmt(result.counts[MATCH])}`;
+  const DEFAULT = { [MAIN]: "головний список на опрацювання", [ATTENTION]: "описки, виробник замість бренду, порожні", [NORM]: "інше написання, серія, словоформа" };
+  for (const [g, id] of [[MAIN, "main"], [ATTENTION, "attention"], [NORM, "norm"]]) {
+    $("k-" + id).textContent = fmt(n[g]);
+    $(`k-${id}-note`).textContent = done[g] ? `опрацьовано ${fmt(done[g])} з ${fmt(n[g])}` : DEFAULT[g];
+  }
+  document.querySelectorAll(".kpi[data-group]").forEach(b => { b.disabled = false; b.setAttribute("aria-pressed", state.group === b.dataset.group); });
+}
+
+function statusPass(r) {
+  const [st] = eff(r);
+  switch (state.status) {
+    case "open": return st !== "same";
+    case "todo": return !st;
+    case "done": return !!st && st !== "same";
+    case "same": return st === "same";
+    default: return true;
+  }
+}
+
+function renderTypes() {
+  const rows = state.result.rows.filter(statusPass);
+  const n = {}, g = { all: rows.length };
+  for (const r of rows) { n[r.type] = (n[r.type] || 0) + 1; g[GROUP[r.type]] = (g[GROUP[r.type]] || 0) + 1; }
+  $("groups").innerHTML = [["all", "Усі розбіжності"], [MAIN, MAIN], [ATTENTION, ATTENTION], [NORM, NORM]].map(([key, label]) =>
+    `<button data-group-tab="${esc(key)}" aria-pressed="${state.group === key}">${esc(label)}<em>${fmt(g[key] || 0)}</em></button>`).join("");
+  const types = (state.group === "all" ? TYPES : GROUPS[state.group]).filter(t => state.result.counts[t]);
+  $("types").hidden = types.length < 2;
+  $("types").innerHTML = [`<button data-type="" aria-pressed="${!state.type}">Усі типи</button>`].concat(types.map(t =>
+    `<button data-type="${esc(t)}" aria-pressed="${state.type === t}" title="${esc(HINT[t] ?? "")}">${esc(t)}<em>${fmt(n[t] || 0)}</em></button>`)).join("");
+  document.querySelectorAll(".kpi[data-group]").forEach(b => b.setAttribute("aria-pressed", state.group === b.dataset.group));
+}
+
+function visibleRows(ignoreSuspect = false) {
+  const { result, type, query, pair } = state;
+  const q = query.trim().toLowerCase();
+  return result.rows.filter(r => {
+    if (state.group !== "all" && GROUP[r.type] !== state.group) return false;
+    if (type && r.type !== type) return false;
+    if (state.onlySuspect && !ignoreSuspect && !r.suspect) return false;
+    if (pair && pairKey(r.tabBrand, r.refBrand) !== pair.key) return false;
+    if (!statusPass(r)) return false;
+    if (!q) return true;
+    return r.tabId === q || r.refId === q || r.tabCode === q ||
+      [r.tabName, r.refName, r.tabBrand, r.refBrand, r.refSeries].some(v => v.toLowerCase().includes(q));
+  });
+}
+
+function pairsOf(rows) {
+  const m = new Map();
+  for (const r of rows) {
+    const k = r.type + "\u0001" + pairKey(r.tabBrand, r.refBrand);
+    const p = m.get(k) ?? m.set(k, { type: r.type, tab: r.tabBrand, ref: r.refBrand, key: pairKey(r.tabBrand, r.refBrand), n: 0 }).get(k);
+    p.n++;
+  }
+  const order = Object.fromEntries(TYPES.map((t, i) => [t, i]));
+  return [...m.values()].sort((a, b) => order[a.type] - order[b.type] || b.n - a.n || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0));
+}
+
+const statusSelect = (value, attrs, emptyLabel = NONE) =>
+  `<select class="status" data-st="${value}" ${attrs}><option value="">${emptyLabel}</option>${
+    Object.entries(STATUSES).map(([k, v]) => `<option value="${k}"${k === value ? " selected" : ""}>${v}</option>`).join("")}</select>`;
+// Статус для товару: окремо для нього або одразу для всієї пари брендів.
+function itemSelect(r, value, emptyLabel) {
+  const key = pairKey(r.tabBrand, r.refBrand), n = pairCount.get(key) || 1;
+  const opts = (prefix, sel) => Object.entries(STATUSES).map(([k, v]) =>
+    `<option value="${prefix}${k}"${sel === k ? " selected" : ""}>${v}</option>`).join("");
+  const pairLabel = `Уся пара: ${r.tabBrand || "—"} → ${r.refBrand || "—"} (${fmt(n)} тов.)`;
+  return `<select class="status" data-st="${value}" data-item="${esc(r.tabId)}" data-pair-key="${esc(key)}" data-n="${n}" aria-label="Статус товару або пари">
+    <option value="">${emptyLabel}</option>
+    <optgroup label="Тільки цей товар">${opts("", value)}</optgroup>
+    <optgroup label="${esc(pairLabel)}">${opts("pair:", "")}</optgroup></select>`;
+}
+const brandCell = (v, small) => v ? `${esc(v)}${small ? `<small>${esc(small)}</small>` : ""}` : `<span class="empty-val">немає бренду</span>`;
+
+function itemHtml(r) {
+  const tabMeta = [r.tabMaker, r.tabCode && `код ${r.tabCode}`].filter(Boolean).join(" · ");
+  const refMeta = [r.refSeries && `серія: ${r.refSeries}`, r.refMaker].filter(Boolean).join(" · ");
+  const own = decisions.items[r.tabId] || {};
+  const pairRec = decisions.pairs[pairKey(r.tabBrand, r.refBrand)];
+  const [st, , src] = eff(r);
+  const inherit = !own.status && pairRec?.status in STATUSES ? `<span class="inherit">за парою: ${esc(STATUSES[pairRec.status])}</span>` : "";
+  const sel = state.selected.has(r.tabId);
+  return `<article class="item grid${st === "same" ? " st-same" : ""}${sel ? " selected" : ""}" data-id="${esc(r.tabId)}">
+    <div class="side">
+      <div class="brand"><input type="checkbox" class="sel" data-sel="${esc(r.tabId)}"${sel ? " checked" : ""} aria-label="Вибрати товар">${brandCell(r.tabBrand, r.tabBrandKey === "Торговое название" ? "торгова назва" : "")}</div>
+      <div class="name">${r.tabLink ? `<a href="${esc(r.tabLink)}" target="_blank" rel="noopener">${esc(r.tabId)}</a>` : esc(r.tabId)} ${esc(r.tabName)}</div>
+      ${tabMeta ? `<div class="meta">${esc(tabMeta)}</div>` : ""}
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="side">
+      <div class="brand">${r.type === NO_REF_ROW ? `<span class="empty-val">еталона немає у файлі</span>` : brandCell(r.refBrand)}</div>
+      <div class="name">${r.refLink ? `<a href="${esc(r.refLink)}" target="_blank" rel="noopener">${esc(r.refId)}</a>` : ""} ${esc(r.refName)}</div>
+      ${refMeta ? `<div class="meta">${esc(refMeta)}</div>` : ""}
+    </div>
+    <div class="c-type">
+      <span class="chip ${CHIP[r.type] ?? ""}">${esc(r.type)}</span>
+      ${r.suspect ? `<span class="chip suspect" title="У назв і виробників немає спільних слів">Підозра на хибне зіставлення</span>` : ""}
+      ${r.refStatus ? `<small>Еталон: ${esc(r.refStatus)}</small>` : ""}
+      <div class="decide">${itemSelect(r, own.status || "", inherit ? "За парою" : NONE)}${inherit}</div>
+    </div>
+    <div class="note"><input data-note-item="${esc(r.tabId)}" value="${esc(own.note || "")}" placeholder="Коментар до товару" aria-label="Коментар до товару"></div>
+    ${st === "fix_ref" ? fixBrandInput(src === "item" ? "items" : "pairs", src === "item" ? r.tabId : pairKey(r.tabBrand, r.refBrand), r.tabBrand, src === "pair") : ""}
+  </article>`;
+}
+
+// Правильний бренд для «Виправити в еталоні». Порожньо — у файл піде бренд Tabletki.
+function fixBrandInput(scope, key, tabBrand, viaPair) {
+  const rec = decisions[scope][key] || {};
+  return `<label class="fixbrand"><span>Правильний бренд${viaPair ? " (для пари)" : ""}</span>
+    <input data-brand-scope="${scope}" data-brand-key="${esc(key)}" value="${esc(rec.brand || "")}" placeholder="${esc(tabBrand || "впишіть бренд")}"></label>`;
+}
+
+function pairHtml(p) {
+  const rec = decisions.pairs[p.key] || {};
+  const sel = state.selected.has(p.key);
+  return `<div class="pair pgrid${sel ? " selected" : ""}">
+    <div class="side-head"><input type="checkbox" class="sel" data-sel="${esc(p.key)}"${sel ? " checked" : ""} aria-label="Вибрати пару">
+    <button class="pair-open" data-pair="${esc(p.key)}" title="Показати товари цієї пари">
+      <b>${p.tab ? esc(p.tab) : '<span class="muted">немає бренду</span>'}</b><span class="arrow">→</span>
+      <b>${p.ref ? esc(p.ref) : '<span class="muted">немає бренду</span>'}</b></button></div>
+    <span><span class="chip ${CHIP[p.type] ?? ""}">${esc(p.type)}</span></span>
+    <span class="n">${fmt(p.n)}</span>
+    <div class="decide">${statusSelect(rec.status || "", `data-pair-status="${esc(p.key)}" data-n="${p.n}" aria-label="Статус пари"`)}</div>
+    <div class="note"><input data-note-pair="${esc(p.key)}" value="${esc(rec.note || "")}" placeholder="Коментар до пари" aria-label="Коментар до пари"></div>
+    ${rec.status === "fix_ref" ? fixBrandInput("pairs", p.key, p.tab, false) : ""}
+  </div>`;
+}
+
+function renderList() {
+  const rows = visibleRows();
+  $("suspect-label").textContent = `Лише підозра на хибне зіставлення (${fmt(visibleRows(true).filter(r => r.suspect).length)})`;
+  const items = $("items"), more = $("more");
+  $("colhead").hidden = state.view !== "items";
+  const pf = $("pair-filter");
+  pf.hidden = !state.pair;
+  if (state.pair) pf.innerHTML = `Пара: ${esc(state.pair.tab || "—")} → ${esc(state.pair.ref || "—")} <button id="pair-clear" aria-label="Скинути пару">✕</button>`;
+  let list, html;
+  if (state.view === "pairs") {
+    list = pairsOf(rows);
+    $("count").textContent = `${fmt(list.length)} пар · ${fmt(rows.length)} товарів`;
+    html = list.slice(0, state.shown).map(pairHtml);
+  } else {
+    list = rows;
+    $("count").textContent = `${fmt(rows.length)} товарів`;
+    html = rows.slice(0, state.shown).map(itemHtml);
+  }
+  items.innerHTML = html.join("");
+  state.visibleKeys = state.view === "pairs" ? list.map(p => p.key) : list.map(r => r.tabId);
+  renderBulk();
+  $("nothing").hidden = list.length > 0;
+  more.hidden = list.length <= state.shown;
+  more.textContent = `Показати ще ${fmt(Math.min(PAGE, list.length - state.shown))}`;
+}
+
+function renderBulk() {
+  const n = state.selected.size, bar = $("bulk");
+  bar.hidden = !n;
+  document.body.classList.toggle("has-bulk", !!n);
+  const all = $("select-all");
+  const keys = state.visibleKeys || [];
+  all.checked = keys.length > 0 && keys.every(k => state.selected.has(k));
+  all.indeterminate = !all.checked && keys.some(k => state.selected.has(k));
+  if (!n) return;
+  $("bulk-count").textContent = state.view === "pairs" ? `Вибрано пар: ${fmt(n)}` : `Вибрано товарів: ${fmt(n)}`;
+  if (!$("bulk-status").options.length) {
+    $("bulk-status").innerHTML = `<option value="-" selected disabled>Оберіть статус…</option>` +
+      Object.entries(STATUSES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("") +
+      `<option value="">${NONE} (зняти статус)</option>`;
+  }
+  $("bulk-apply").disabled = $("bulk-status").value === "-";
+}
+function clearSelection() { state.selected.clear(); }
+
+/* --- експорт --- */
+const HEADERS = ["Група", "Тип розбіжності", "ID товару Tabletki", "Код Tabletki", "Назва Tabletki", "Бренд Tabletki", "Поле бренду Tabletki",
+  "Виробник Tabletki", "Посилання Tabletki", "ID еталона", "Назва товару DWH", "Бренд еталона", "Серія бренду",
+  "Виробник еталона", "Статус еталона", "Посилання на еталон", "Підозра на хибне зіставлення", "Статус опрацювання", "Коментар", "Рішення для"];
+const FIELDS = ["type", "tabId", "tabCode", "tabName", "tabBrand", "tabBrandKey", "tabMaker", "tabLink", "refId", "refName",
+  "refBrand", "refSeries", "refMaker", "refStatus", "refLink"];
+const WIDTHS = [18, 28, 12, 10, 50, 24, 18, 24, 30, 10, 50, 24, 24, 24, 12, 40, 14, 22, 40, 12];
+const FIX_HEADERS = ["ID еталона", "Назва товару DWH", "Бренд зараз", "Правильний бренд", "Звідки бренд", "Конфлікт",
+  "Товари Tabletki", "Коментар", "Посилання на еталон"];
+const FIX_WIDTHS = [10, 50, 24, 24, 14, 10, 24, 40, 40];
+// Один рядок на еталон зі статусом «Виправити в еталоні», як ref_fixes у tool/brandcheck/report.py.
+function refFixes(rows) {
+  const by = new Map();
+  for (const r of rows) {
+    const [st, note, , brand] = eff(r);
+    if (st !== "fix_ref" || !r.refId) continue;
+    if (!by.has(r.refId)) by.set(r.refId, []);
+    by.get(r.refId).push([r, note, brand.trim()]);
+  }
+  return [...by.keys()].sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0)).map(id => {
+    const items = by.get(id), r0 = items[0][0];
+    const proposals = [...new Set(items.map(([r, , b]) => b || r.tabBrand))];
+    const notes = [...new Set(items.map(([, n]) => n).filter(Boolean))];
+    return [id, r0.refName, r0.refBrand, proposals.join(" | "), items.some(([, , b]) => b) ? "вказано" : "з Tabletki",
+      proposals.length > 1 ? "так" : "", items.map(([r]) => r.tabId).join(", "), notes.join("; "), r0.refLink];
+  });
+}
+
+function sheet(aoa, widths) {
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = widths.map(wch => ({ wch }));
+  ws["!autofilter"] = { ref: ws["!ref"] };
+  return ws;
+}
+function stamp() {
+  const d = new Date(), pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+}
+function exportXlsx(kind) {
+  if (!window.XLSX) return toast("Бібліотека Excel не завантажилась. Перевірте інтернет і оновіть сторінку.", true);
+  const { result } = state;
+  const rows = kind === "view" ? visibleRows() : result.rows.filter(r => eff(r)[0] !== "same");
+  const wb = XLSX.utils.book_new();
+  if (kind === "fixes") {
+    const fixes = refFixes(rows);
+    if (!fixes.length) return toast("Немає товарів зі статусом «Виправити в еталоні».", true);
+    XLSX.utils.book_append_sheet(wb, sheet([FIX_HEADERS, ...fixes], FIX_WIDTHS), "Виправлення еталона");
+    XLSX.writeFile(wb, `dwh-fixes-${stamp()}.xlsx`);
+    $("export-menu").open = false;
+    return;
+  }
+  XLSX.utils.book_append_sheet(wb, sheet([HEADERS, ...rows.map(r => {
+    const [st, note, src] = eff(r);
+    return [GROUP[r.type], ...FIELDS.map(f => r[f]), r.suspect ? "так" : "", STATUSES[st] ?? NONE, note, SOURCE[src]];
+  })], WIDTHS), "Розбіжності");
+  XLSX.utils.book_append_sheet(wb, sheet([["Група", "Тип розбіжності", "Бренд Tabletki", "Бренд еталона", "Товарів", "Статус пари", "Коментар"],
+    ...pairsOf(rows).map(p => { const rec = decisions.pairs[p.key] || {}; return [GROUP[p.type], p.type, p.tab, p.ref, p.n, STATUSES[rec.status] ?? NONE, rec.note ?? ""]; })],
+    [18, 28, 30, 30, 10, 22, 40]), "Пари брендів");
+  if (kind === "full") {
+    const same = result.rows.length - rows.length;
+    const summary = [["Показник", "Значення"], ["Товарів Tabletki у вивантаженні", result.tabTotal],
+      ["Перевірено зіставлених", result.checked], [MATCH, result.counts[MATCH]],
+      ...Object.entries(GROUPS).flatMap(([g, ts]) => [[`${g}: усього`, ts.reduce((a, t) => a + result.counts[t], 0)], ...ts.map(t => [`  ${t}`, result.counts[t]])]),
+      ["Підозра на хибне зіставлення", rows.filter(r => r.suspect).length], ["Позначено «Не помилка» (не в списку)", same],
+      ["Усього в списку розбіжностей", rows.length], ["", ""], ...state.sources.map(s => ["Джерело", s])];
+    XLSX.utils.book_append_sheet(wb, sheet(summary, [40, 60]), "Зведення");
+    const fixes = refFixes(rows);
+    if (fixes.length) XLSX.utils.book_append_sheet(wb, sheet([FIX_HEADERS, ...fixes], FIX_WIDTHS), "Виправлення еталона");
+  }
+  XLSX.writeFile(wb, `brand-check-${kind === "full" ? "" : "view-"}${stamp()}.xlsx`);
+  $("export-menu").open = false;
+}
+function saveFile() {
+  const blob = new Blob([JSON.stringify(decisions, null, 1)], { type: "application/json" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `decisions-${stamp()}.json` });
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  $("export-menu").open = false;
+  toast("Файл рішень збережено. Для Python-скрипта покладіть його як data/decisions.json.");
+}
+async function loadFile(file) {
+  try {
+    const d = JSON.parse(await file.text());
+    if (d.version !== 1) throw new Error();
+    Object.assign(decisions.pairs, d.pairs || {}); Object.assign(decisions.items, d.items || {});
+    saveDecisions();
+    toast(`Завантажено рішень: пар ${Object.keys(d.pairs || {}).length}, товарів ${Object.keys(d.items || {}).length}.`);
+    if (state.result) renderAll();
+  } catch { toast("Це не файл рішень цього інструмента.", true); }
+  $("export-menu").open = false;
+}
+
+/* --- події --- */
+const drop = $("drop");
+$("file").addEventListener("change", e => { takeFiles([...e.target.files]); e.target.value = ""; });
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); takeFiles([...e.dataTransfer.files]); });
+
+const pickGroup = g => { state.group = g; state.type = ""; state.shown = PAGE; renderTypes(); renderList(); };
+$("groups").addEventListener("click", e => { const b = e.target.closest("[data-group-tab]"); if (b) pickGroup(b.dataset.groupTab); });
+document.querySelectorAll(".kpi[data-group]").forEach(b => b.addEventListener("click", () => pickGroup(b.dataset.group)));
+$("types").addEventListener("click", e => {
+  const b = e.target.closest("[data-type]");
+  if (!b) return;
+  state.type = b.dataset.type; state.shown = PAGE; renderTypes(); renderList();
+});
+document.querySelector(".segments").addEventListener("click", e => {
+  const b = e.target.closest("[data-view]");
+  if (!b) return;
+  state.view = b.dataset.view; state.shown = PAGE; clearSelection();
+  document.querySelectorAll("[data-view]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  renderList();
+});
+let searchTimer;
+$("search").addEventListener("input", e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { state.query = e.target.value; state.shown = PAGE; renderList(); }, 150);
+});
+$("filter-status").addEventListener("change", e => { state.status = e.target.value; state.shown = PAGE; renderTypes(); renderList(); });
+
+$("items").addEventListener("click", e => {
+  const b = e.target.closest("[data-pair]");
+  if (!b) return;
+  const p = pairsOf(state.result.rows).find(x => x.key === b.dataset.pair);
+  state.pair = { key: b.dataset.pair, tab: p?.tab ?? "", ref: p?.ref ?? "" };
+  state.view = "items"; state.shown = PAGE; clearSelection();
+  document.querySelectorAll("[data-view]").forEach(x => x.setAttribute("aria-pressed", x.dataset.view === "items"));
+  renderList(); window.scrollTo({ top: $("results").offsetTop - 8 });
+});
+$("items").addEventListener("change", e => {
+  const el = e.target;
+  if (el.dataset.sel !== undefined) {
+    if (el.checked) state.selected.add(el.dataset.sel); else state.selected.delete(el.dataset.sel);
+    el.closest(".item, .pair").classList.toggle("selected", el.checked);
+    return renderBulk();
+  }
+  if (el.dataset.brandScope) return setDecision(el.dataset.brandScope, el.dataset.brandKey, undefined, undefined, el.value.trim());
+  if (el.dataset.item !== undefined && el.value.startsWith("pair:")) {
+    // Статус для всієї пари з картки товару. Власний статус товару знімається, інакше він сильніший за пару.
+    const status = el.value.slice(5), id = el.dataset.item, key = el.dataset.pairKey;
+    const prevPair = setDecision("pairs", key, status);
+    const prevItem = decisions.items[id]?.status ? setDecision("items", id, "") : undefined;
+    renderAll();
+    toast(`Пара (${fmt(+el.dataset.n)} тов.): ${STATUSES[status]}`, false, () => {
+      restore("pairs", key, prevPair);
+      if (prevItem !== undefined) restore("items", id, prevItem);
+      renderAll();
+    });
+  } else if (el.dataset.item !== undefined || el.dataset.pairStatus !== undefined) {
+    const [scope, key] = el.dataset.item !== undefined ? ["items", el.dataset.item] : ["pairs", el.dataset.pairStatus];
+    const prev = setDecision(scope, key, el.value);
+    const label = STATUSES[el.value] ?? NONE;
+    const what = scope === "pairs" ? `Пара (${fmt(+el.dataset.n)} тов.)` : `Товар ${key}`;
+    renderAll();
+    toast(`${what}: ${label}`, false, () => { restore(scope, key, prev); renderAll(); });
+  } else if (el.dataset.noteItem !== undefined) setDecision("items", el.dataset.noteItem, undefined, el.value.trim());
+  else if (el.dataset.notePair !== undefined) setDecision("pairs", el.dataset.notePair, undefined, el.value.trim());
+});
+$("pair-filter").addEventListener("click", e => {
+  if (e.target.id === "pair-clear") { state.pair = null; state.shown = PAGE; renderList(); }
+});
+$("more").addEventListener("click", () => { state.shown += PAGE; renderList(); });
+$("only-suspect").addEventListener("change", e => { state.onlySuspect = e.target.checked; state.shown = PAGE; renderList(); });
+$("select-all").addEventListener("change", e => {
+  // Усі товари або пари списку з урахуванням фільтрів, а не лише показані на сторінці.
+  for (const k of state.visibleKeys || []) if (e.target.checked) state.selected.add(k); else state.selected.delete(k);
+  renderList();
+});
+$("bulk-clear").addEventListener("click", () => { clearSelection(); renderList(); });
+$("bulk-status").addEventListener("change", () => { $("bulk-apply").disabled = $("bulk-status").value === "-"; });
+$("bulk-apply").addEventListener("click", () => {
+  const status = $("bulk-status").value, scope = state.view === "pairs" ? "pairs" : "items";
+  if (status === "-") return;
+  const before = JSON.parse(JSON.stringify(decisions)), n = state.selected.size;
+  for (const key of state.selected) setDecision(scope, key, status);
+  clearSelection(); $("bulk-status").value = "-"; renderAll();
+  toast(`${scope === "pairs" ? "Пар" : "Товарів"}: ${fmt(n)} → ${STATUSES[status] ?? NONE}`, false,
+    () => { decisions = before; saveDecisions(); renderAll(); });
+});
+
+$("reviewer").value = store.get(WHO) || "";
+$("reviewer").addEventListener("change", e => store.set(WHO, e.target.value.trim()));
+$("load").addEventListener("change", e => { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ""; });
+document.querySelectorAll("[data-export]").forEach(b => b.addEventListener("click", () => {
+  const k = b.dataset.export;
+  if (k === "save") return saveFile();
+  if (k === "clear") {
+    if (!confirm("Видалити всі статуси й коментарі в цьому браузері? Файли рішень не зачіпаються.")) return;
+    decisions = { version: 1, pairs: {}, items: {} }; saveDecisions();
+    $("export-menu").open = false;
+    if (state.result) renderAll();
+    return;
+  }
+  exportXlsx(k);
+}));
+document.addEventListener("click", e => { const m = $("export-menu"); if (m.open && !m.contains(e.target)) m.open = false; });
+</script>
+</body>
+</html>
