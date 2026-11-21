@@ -231,6 +231,7 @@ body.has-bulk .toast { bottom: 96px; }
           <button data-export="save"><b>Зберегти рішення у файл</b><small id="save-note">Статуси й коментарі. Також зберігаються в цьому браузері. Файл для скрипта: data/decisions.json.</small></button>
           <label><b>Завантажити рішення з файлу</b><small>Додає рішення з файлу .json до наявних, файл має перевагу.</small><input id="load" type="file" accept=".json" hidden></label>
           <button data-export="clear" class="danger"><b>Видалити всі рішення</b></button>
+          <button data-export="forget" class="danger" disabled><b>Забути збережену перевірку</b><small>Результат перевірки зберігається в цьому браузері, щоб не завантажувати файли після перезавантаження. Рішення не зачіпаються.</small></button>
         </div>
       </details>
     </div>
@@ -722,20 +723,74 @@ async function run() {
       stage.textContent = (kind === "ref" ? "Читаю еталонні товари" : "Читаю товари Tabletki і порівнюю") + ` · ${Math.round(part * 100)}%`;
     });
     bar.firstElementChild.style.width = "100%";
-    setSlot("ref", files.ref.name, true); setSlot("tab", files.tab.name, true);
-    stage.textContent = `Готово за ${Math.round((performance.now() - t0) / 1000)} с.`;
-    state.result = result; state.sources = [files.ref.name, files.tab.name];
-    pairCount = new Map();
-    for (const r of result.rows) { const k = pairKey(r.tabBrand, r.refBrand); pairCount.set(k, (pairCount.get(k) || 0) + 1); }
-    state.group = MAIN; state.type = ""; state.pair = null; state.shown = PAGE;
-    document.querySelectorAll("[data-export=full], [data-export=view], [data-export=fixes]").forEach(b => b.disabled = false);
-    $("start").hidden = true; $("results").hidden = false;
-    renderAll();
+    const saved = { version: 1, rules: RULES, checkedAt: Date.now(), sources: [files.ref.name, files.tab.name], result };
+    showResult(saved, `Готово за ${Math.round((performance.now() - t0) / 1000)} с.`);
+    try { await savedResult.put(saved); }
+    catch { toast("Не вдалося зберегти результат у браузері. Після перезавантаження вивантаження доведеться завантажити знову.", true); }
   } catch (e) {
     showError(e.message); stage.hidden = true;
   } finally {
     setTimeout(() => bar.hidden = true, 600);
   }
+}
+
+// Показати результат перевірки: щойно зробленої або збереженої в браузері.
+function showResult(saved, stageText) {
+  const { result, sources } = saved;
+  setSlot("ref", sources[0], true); setSlot("tab", sources[1], true);
+  $("stage").hidden = false; $("stage").textContent = stageText;
+  state.result = result; state.sources = sources;
+  pairCount = new Map();
+  for (const r of result.rows) { const k = pairKey(r.tabBrand, r.refBrand); pairCount.set(k, (pairCount.get(k) || 0) + 1); }
+  state.group = MAIN; state.type = ""; state.pair = null; state.shown = PAGE; clearSelection();
+  document.querySelectorAll("[data-export=full], [data-export=view], [data-export=fixes], [data-export=forget]").forEach(b => b.disabled = false);
+  $("start").hidden = true; $("results").hidden = false;
+  renderAll();
+}
+
+/* --- збережений результат перевірки (IndexedDB цього браузера) ---
+   Зберігається не файл вивантаження, а результат: рядки розбіжностей і лічильники, кілька МБ.
+   RULES — відбиток коду перевірки: якщо правила змінились, старий результат не показується. */
+const savedResult = {
+  open() {
+    return new Promise((ok, fail) => {
+      const r = indexedDB.open("brandcheck", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("results");
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => fail(r.error);
+    });
+  },
+  async run(mode, fn) {
+    const db = await this.open();
+    return new Promise((ok, fail) => {
+      const tx = db.transaction("results", mode), req = fn(tx.objectStore("results"));
+      tx.oncomplete = () => { db.close(); ok(req.result); };
+      tx.onerror = tx.onabort = () => { db.close(); fail(tx.error); };
+    });
+  },
+  get() { return this.run("readonly", st => st.get("last")); },
+  put(v) { return this.run("readwrite", st => st.put(v, "last")); },
+  forget() { return this.run("readwrite", st => st.delete("last")); },
+};
+const RULES = (() => {
+  const src = document.querySelector("script[type=module]").textContent;
+  const block = src.slice(src.indexOf("=== check:start ==="), src.indexOf("=== check:end ==="));
+  let h = 2166136261;
+  for (let i = 0; i < block.length; i++) h = Math.imul(h ^ block.charCodeAt(i), 16777619);
+  return (h >>> 0).toString(16);
+})();
+const when = t => new Date(t).toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+async function restoreResult() {
+  let saved;
+  try { saved = await savedResult.get(); } catch { return; }
+  if (!saved || saved.version !== 1 || state.result) return;
+  if (saved.rules !== RULES) {
+    $("stage").hidden = false;
+    $("stage").textContent = `Правила перевірки оновились після ${when(saved.checkedAt)}. Завантажте вивантаження знову.`;
+    return;
+  }
+  showResult(saved, `Збережений результат перевірки від ${when(saved.checkedAt)}. Щоб оновити, перетягніть нові вивантаження.`);
 }
 
 function renderAll() { renderKpis(); renderTypes(); renderList(); }
@@ -1110,6 +1165,17 @@ $("load").addEventListener("change", e => { if (e.target.files[0]) loadFile(e.ta
 document.querySelectorAll("[data-export]").forEach(b => b.addEventListener("click", () => {
   const k = b.dataset.export;
   if (k === "save") return saveFile();
+  if (k === "forget") {
+    savedResult.forget().catch(() => {});
+    state.result = null;
+    $("results").hidden = true; $("start").hidden = false; $("stage").hidden = true;
+    setSlot("ref", ""); setSlot("tab", ""); files.ref = files.tab = null;
+    document.querySelectorAll("[data-export=full], [data-export=view], [data-export=fixes], [data-export=forget]").forEach(b => b.disabled = true);
+    for (const id of ["checked", "main", "attention", "norm"]) $("k-" + id).textContent = "—";
+    document.querySelectorAll(".kpi[data-group]").forEach(b => b.disabled = true);
+    $("export-menu").open = false;
+    return toast("Збережену перевірку видалено з браузера.");
+  }
   if (k === "clear") {
     if (!confirm("Видалити всі статуси й коментарі в цьому браузері? Файли рішень не зачіпаються.")) return;
     decisions = { version: 1, pairs: {}, items: {} }; saveDecisions();
@@ -1120,6 +1186,7 @@ document.querySelectorAll("[data-export]").forEach(b => b.addEventListener("clic
   exportXlsx(k);
 }));
 document.addEventListener("click", e => { const m = $("export-menu"); if (m.open && !m.contains(e.target)) m.open = false; });
+restoreResult();
 </script>
 </body>
 </html>
