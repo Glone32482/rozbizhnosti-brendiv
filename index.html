@@ -159,6 +159,25 @@ button.kpi:not(:disabled):hover { outline: 2px solid var(--hero-line); }
 .note input:focus { border-color: var(--ink); background: var(--card); outline: none; box-shadow: 0 0 0 3px var(--wu-soft); }
 .item.st-same { opacity: .6; }
 .chip.suspect { background: var(--ink); color: #fff; }
+.chip.v-wrong { background: #fff; color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); }
+.chip.v-ok { background: #fff; color: var(--ok); box-shadow: inset 0 0 0 1px #bfe5cd; }
+.bhint { margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: var(--wu-soft); color: var(--ink-2); font-size: 12px; }
+.bhint b { color: var(--ink); }
+.item.focus, .pair.focus { outline: 3px solid var(--wu); outline-offset: 2px; }
+.keys { margin: -4px 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--card); box-shadow: var(--shadow); color: var(--ink-2); font-size: 13px; }
+.keys kbd { display: inline-block; min-width: 20px; padding: 1px 6px; margin: 0 2px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; background: var(--bg); font: 600 12px/1.4 inherit; text-align: center; }
+.save-hint { padding: 8px 14px; border: none; border-radius: 10px; background: #3a2a10; color: var(--wu); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.save-hint:hover { background: #4a3714; }
+.progress-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.progress-panel .card { padding: 16px 18px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
+.progress-panel h3 { margin: 0 0 10px; font-size: 14px; }
+.pbar { margin: 8px 0; }
+.pbar div { display: flex; justify-content: space-between; font-size: 13px; }
+.pbar span.track { display: block; height: 6px; margin-top: 4px; border-radius: 999px; background: var(--soft); overflow: hidden; }
+.pbar span.track i { display: block; height: 100%; background: var(--ink); }
+.hist { width: 100%; border-collapse: collapse; font-size: 12px; }
+.hist td { padding: 4px 6px 4px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.hist td:first-child { white-space: nowrap; color: var(--ink-3); }
 .fixbrand { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
 .fixbrand span { flex: none; font-size: 12px; font-weight: 600; color: var(--bad); }
 .fixbrand input { flex: 1; padding: 6px 10px; border: 1px solid #f5c6c0; border-radius: 8px; background: var(--card); font: inherit; font-size: 13px; }
@@ -219,6 +238,7 @@ body.has-bulk .toast { bottom: 96px; }
       <span class="logo">WU</span>
       <h1>Розбіжності брендів: еталон і Tabletki.ua</h1>
       <span class="spacer"></span>
+      <button class="save-hint" id="save-hint" hidden title="Зберегти рішення у файл"></button>
       <details class="menu" id="export-menu">
         <summary class="btn wu">Експорт в Excel</summary>
         <div class="menu-list">
@@ -230,7 +250,7 @@ body.has-bulk .toast { bottom: 96px; }
           <hr>
           <button data-export="save"><b>Зберегти рішення у файл</b><small id="save-note">Статуси й коментарі. Також зберігаються в цьому браузері. Файл для скрипта: data/decisions.json.</small></button>
           <label><b>Завантажити рішення з файлу</b><small>Додає рішення з файлу .json до наявних, файл має перевагу.</small><input id="load" type="file" accept=".json" hidden></label>
-          <button data-export="clear" class="danger"><b>Видалити всі рішення</b></button>
+          <button data-export="clear" class="danger"><b>Видалити всі рішення</b><small>Статуси, коментарі й історію змін у цьому браузері.</small></button>
           <button data-export="forget" class="danger" disabled><b>Забути збережену перевірку</b><small>Результат перевірки зберігається в цьому браузері, щоб не завантажувати файли після перезавантаження. Рішення не зачіпаються.</small></button>
         </div>
       </details>
@@ -267,6 +287,7 @@ body.has-bulk .toast { bottom: 96px; }
     </section>
 
     <section id="results" hidden>
+      <div class="progress-panel" id="progress-panel" hidden></div>
       <div class="listhead">
         <div class="types" id="groups" role="group" aria-label="Група розбіжностей"></div>
         <div class="subtypes" id="types" role="group" aria-label="Тип розбіжності"></div>
@@ -276,6 +297,20 @@ body.has-bulk .toast { bottom: 96px; }
             <button data-view="pairs" aria-pressed="false">Пари брендів</button>
           </div>
           <input class="search" id="search" type="search" placeholder="Пошук за ID, назвою або брендом" aria-label="Пошук">
+          <select class="filter-status" id="filter-ref-status" aria-label="Статус еталона"></select>
+          <select class="filter-status" id="filter-verdict" aria-label="Висновок підказки">
+            <option value="">Підказка: усі</option>
+            <option value="wrong">Схоже, помилка в еталоні</option>
+            <option value="ok">Еталон узгоджений з іншими</option>
+            <option value="none">Без висновку</option>
+          </select>
+          <select class="filter-status" id="sort" aria-label="Сортування">
+            <option value="group">Порядок: за групою</option>
+            <option value="pair">Більші пари спочатку</option>
+            <option value="ref">Бренд еталона А–Я</option>
+            <option value="tab">Бренд Tabletki А–Я</option>
+            <option value="maker">Виробник еталона А–Я</option>
+          </select>
           <select class="filter-status" id="filter-status" aria-label="Статус опрацювання">
             <option value="open">Без «Не помилка»</option>
             <option value="todo">Не опрацьовані</option>
@@ -287,7 +322,14 @@ body.has-bulk .toast { bottom: 96px; }
           <label class="pick"><input type="checkbox" id="select-all"> Вибрати всі в списку</label>
           <span class="filter" id="pair-filter" hidden></span>
           <span class="spacer"></span>
+          <button class="btn" id="progress-btn" aria-pressed="false">Прогрес</button>
+          <button class="btn" id="keys-btn" title="Клавіші (?)">Клавіші</button>
           <span class="muted" id="count"></span>
+        </div>
+        <div class="keys" id="keys" hidden>
+          <kbd>↓</kbd><kbd>↑</kbd> або <kbd>J</kbd><kbd>K</kbd> — наступний / попередній ·
+          <kbd>1</kbd> Не помилка · <kbd>2</kbd> Виправити в еталоні · <kbd>3</kbd> Виправити на Tabletki · <kbd>4</kbd> Під питанням · <kbd>0</kbd> зняти ·
+          <kbd>Shift</kbd>+цифра — для всієї пари · <kbd>X</kbd> вибрати · <kbd>O</kbd> відкрити еталон · <kbd>/</kbd> пошук · <kbd>?</kbd> ця підказка
         </div>
         <div class="grid colhead" id="colhead">
           <span>Товар Tabletki</span><span></span><span>Еталонний товар</span><span class="h-type" style="text-align:right">Тип і статус</span>
@@ -576,19 +618,65 @@ export function suspectMatch(tabName, refName, tabMaker, refMaker) {
   return ![...keys(tabMaker)].some(k => mb.has(k));
 }
 
-export function checkRow(t, refs) {
+// Підказка «як цей бренд записаний в інших товарах еталона того ж виробника», як brand_hint у compare.py.
+export const REF_WRONG = "Схоже, помилка в еталоні", REF_CONSISTENT = "Еталон узгоджений з іншими товарами";
+export function brandHint(tabBrand, refBrand, refMaker, others, tabBrandInRef) {
+  tabBrand = tabBrand.trim();
+  const tt = translit(tabBrand);
+  if (!tabBrand || tt.length < 4) return ["", ""];
+  const counts = new Map();
+  for (const [nameT, brand] of others) if (brand && nameT.includes(tt)) counts.set(brand, (counts.get(brand) || 0) + 1);
+  const parts = [];
+  let verdict = "", total = 0, top = "", n = 0;
+  for (const [b, k] of counts) { total += k; if (k > n) { top = b; n = k; } }
+  if (total) {
+    parts.push(`Інші товари виробника з «${tabBrand}» у назві: ${total}, з них бренд «${top}»: ${n}`);
+    if (total >= 2 && n / total >= 0.6) {
+      if (translit(top) === translit(refBrand)) verdict = REF_CONSISTENT;
+      else if (translit(top) === tt && !translit(refMaker).includes(tt)) verdict = REF_WRONG;
+    }
+  }
+  parts.push(tabBrandInRef ? `Бренд «${tabBrand}» в еталоні: ${tabBrandInRef} тов.` : `Бренду «${tabBrand}» в еталоні немає`);
+  return [parts.join(". "), verdict];
+}
+
+// Товари еталона за виробником і частота брендів — для brandHint.
+class RefIndex {
+  constructor(refs) {
+    this.byMaker = new Map(); this.brands = new Map(); this.cache = new Map();
+    for (const [id, r] of refs) {
+      const k = simple(r["Производитель"]);
+      if (!this.byMaker.has(k)) this.byMaker.set(k, []);
+      this.byMaker.get(k).push([id, r]);
+      if (r["Бренд"].trim()) { const b = simple(r["Бренд"]); this.brands.set(b, (this.brands.get(b) || 0) + 1); }
+    }
+  }
+  others(maker, refId) {
+    const k = simple(maker);
+    if (!this.cache.has(k)) this.cache.set(k, (this.byMaker.get(k) || []).map(([i, r]) => [i, translit(r["Название товара DWH"]), r["Бренд"].trim()]));
+    return this.cache.get(k).filter(([i]) => i !== refId).map(([, n, b]) => [n, b]);
+  }
+}
+
+export function checkRow(t, refs, index = null) {
   const [brand, key] = tabBrand(t["Характеристики"]);
   const refId = t["Id DWH связанного товара"].trim();
   let ref = refs.get(refId), type;
   if (!ref) { type = NO_REF_ROW; ref = Object.fromEntries(REF_COLS.map(c => [c, ""])); }
   else type = classify(brand, ref["Бренд"], ref["Серия бренда"], t["Название"], ref["Название товара DWH"],
     t["Производитель"], ref["Производитель"]);
+  let hint = "", verdict = "";
+  if (index && type !== NO_REF_ROW && type !== MATCH && ref["Производитель"].trim()) {
+    [hint, verdict] = brandHint(brand, ref["Бренд"], ref["Производитель"], index.others(ref["Производитель"], refId),
+      brand ? index.brands.get(simple(brand)) || 0 : 0);
+  }
   return {
     type, tabId: t["Id товара источника"], tabCode: t["Id Товара в базе источника"], tabName: t["Название"],
     tabBrand: brand, tabBrandKey: key, tabMaker: t["Производитель"], tabLink: t["Ссылка на сайт"],
     refId, refName: ref["Название товара DWH"], refBrand: ref["Бренд"].trim(), refSeries: ref["Серия бренда"],
     refMaker: ref["Производитель"], refStatus: ref["Статус"], refLink: refId ? REF_LINK + refId : "",
     suspect: type !== NO_REF_ROW && suspectMatch(t["Название"], ref["Название товара DWH"], t["Производитель"], ref["Производитель"]),
+    hint, verdict,
   };
 }
 
@@ -599,12 +687,13 @@ export async function runCheck(refFile, tabFile, onProgress = () => {}) {
     const id = r[REF_COLS[0]].trim();
     if (id) refs.set(id, r);
   }
+  const index = new RefIndex(refs);
   let tabTotal = 0;
   const rows = [], counts = Object.fromEntries([MATCH, ...TYPES].map(t => [t, 0]));
   for await (const t of readColumns(tabFile, TAB_COLS, (a, b) => onProgress("tab", a / b))) {
     tabTotal++;
     if (t["Статус сопоставления"].trim() !== "Сопоставлено") continue;
-    const r = checkRow(t, refs);
+    const r = checkRow(t, refs, index);
     counts[r.type]++;
     if (r.type !== MATCH) rows.push(r);
   }
@@ -653,36 +742,67 @@ const store = {
 function loadDecisions() {
   try {
     const d = JSON.parse(store.get(STORE) || "null");
-    if (d && d.version === 1) return { version: 1, pairs: d.pairs || {}, items: d.items || {} };
+    if (d && d.version === 1) return { version: 1, pairs: d.pairs || {}, items: d.items || {}, history: d.history || [] };
   } catch {}
-  return { version: 1, pairs: {}, items: {} };
+  return { version: 1, pairs: {}, items: {}, history: [] };
 }
+const emptyDecisions = () => ({ version: 1, pairs: {}, items: {}, history: [] });
 let decisions = loadDecisions();
 function saveDecisions() {
   if (!store.set(STORE, JSON.stringify(decisions))) toast("Браузер не дає зберегти рішення. Збережіть їх у файл.", true);
 }
 const eff = r => effective(r.tabId, r.tabBrand, r.refBrand, decisions);
 
+/* Історія змін і лічильник незбережених у файл змін. Історія — частина файлу рішень (history). */
+const UNSAVED = "brandcheck.unsaved", SAVED_AT = "brandcheck.savedAt", HISTORY_MAX = 50000;
+const pad2 = n => String(n).padStart(2, "0");
+const nowText = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+let rowsById = new Map(), pairBrands = new Map();
+function brandsOf(scope, key) {
+  if (scope === "items") { const r = rowsById.get(key); return r ? [r.tabBrand, r.refBrand] : ["", ""]; }
+  return pairBrands.get(key) ?? key.split(" → ");
+}
+function logChange(scope, key, field, from, to) {
+  const [tab, ref] = brandsOf(scope, key);
+  decisions.history.push({ at: nowText(), by: $("reviewer").value.trim(), scope: scope === "items" ? "товар" : "пара",
+    key, tab, ref, field, from, to });
+  if (decisions.history.length > HISTORY_MAX) decisions.history.splice(0, decisions.history.length - HISTORY_MAX);
+  store.set(UNSAVED, String((+store.get(UNSAVED) || 0) + 1));
+}
+const statusLabel = st => STATUSES[st] ?? NONE;
 function setDecision(scope, key, status, note, brand) {
   const map = decisions[scope];
   const prev = map[key] ? { ...map[key] } : null;
   const rec = { ...(map[key] || {}) };
+  if (status !== undefined && (rec.status || "") !== status) logChange(scope, key, "статус", statusLabel(rec.status), statusLabel(status));
+  if (note !== undefined && (rec.note || "") !== note) logChange(scope, key, "коментар", rec.note || "", note);
+  if (brand !== undefined && (rec.brand || "") !== brand) logChange(scope, key, "правильний бренд", rec.brand || "", brand);
   if (status !== undefined) rec.status = status;
   if (note !== undefined) rec.note = note;
   if (brand !== undefined) rec.brand = brand;
   if (!rec.status && !rec.note && !rec.brand) delete map[key];
   else map[key] = { ...rec, by: $("reviewer").value.trim(), at: today() };
-  saveDecisions();
+  saveDecisions(); renderSaveHint();
   return prev;
 }
 function restore(scope, key, prev) {
+  const cur = decisions[scope][key];
+  if ((cur?.status || "") !== (prev?.status || "")) logChange(scope, key, "статус (скасування)", statusLabel(cur?.status), statusLabel(prev?.status));
   if (prev) decisions[scope][key] = prev; else delete decisions[scope][key];
-  saveDecisions();
+  saveDecisions(); renderSaveHint();
+}
+function renderSaveHint() {
+  const n = +store.get(UNSAVED) || 0, at = +store.get(SAVED_AT) || 0;
+  const last = at ? when(at) : "ще не було";
+  $("save-hint").hidden = !n;
+  $("save-hint").textContent = `Не збережено у файл: ${fmt(n)} змін · останнє збереження: ${last}`;
+  $("save-note").textContent = `Останнє збереження у файл: ${last}. Незбережених змін: ${fmt(n)}. Файл для скрипта: data/decisions.json.`;
 }
 
 const files = { ref: null, tab: null };
 let pairCount = new Map();
-const state = { result: null, group: MAIN, type: "", view: "items", onlySuspect: false, selected: new Set(), query: "", pair: null, status: "open", shown: PAGE, sources: [] };
+const state = { result: null, group: MAIN, type: "", view: "items", onlySuspect: false, selected: new Set(),
+  refStatus: "", verdict: "", sort: "group", cursor: -1, progress: false, query: "", pair: null, status: "open", shown: PAGE, sources: [] };
 
 function toast(text, error = false, undo = null) {
   const t = $("toast");
@@ -740,8 +860,18 @@ function showResult(saved, stageText) {
   setSlot("ref", sources[0], true); setSlot("tab", sources[1], true);
   $("stage").hidden = false; $("stage").textContent = stageText;
   state.result = result; state.sources = sources;
-  pairCount = new Map();
-  for (const r of result.rows) { const k = pairKey(r.tabBrand, r.refBrand); pairCount.set(k, (pairCount.get(k) || 0) + 1); }
+  pairCount = new Map(); rowsById = new Map(); pairBrands = new Map();
+  const statuses = new Map();
+  for (const r of result.rows) {
+    const k = pairKey(r.tabBrand, r.refBrand);
+    pairCount.set(k, (pairCount.get(k) || 0) + 1);
+    rowsById.set(r.tabId, r);
+    if (!pairBrands.has(k)) pairBrands.set(k, [r.tabBrand, r.refBrand]);
+    if (r.refStatus) statuses.set(r.refStatus, (statuses.get(r.refStatus) || 0) + 1);
+  }
+  $("filter-ref-status").innerHTML = `<option value="">Статус еталона: усі</option>` + [...statuses].sort((a, b) => b[1] - a[1])
+    .map(([v, n]) => `<option value="${esc(v)}">${esc(v)} (${fmt(n)})</option>`).join("");
+  state.refStatus = ""; state.cursor = -1;
   state.group = MAIN; state.type = ""; state.pair = null; state.shown = PAGE; clearSelection();
   document.querySelectorAll("[data-export=full], [data-export=view], [data-export=fixes], [data-export=forget]").forEach(b => b.disabled = false);
   $("start").hidden = true; $("results").hidden = false;
@@ -845,6 +975,10 @@ function visibleRows(ignoreSuspect = false) {
     if (state.group !== "all" && GROUP[r.type] !== state.group) return false;
     if (type && r.type !== type) return false;
     if (state.onlySuspect && !ignoreSuspect && !r.suspect) return false;
+    if (state.refStatus && r.refStatus !== state.refStatus) return false;
+    if (state.verdict === "wrong" && r.verdict !== REF_WRONG) return false;
+    if (state.verdict === "ok" && r.verdict !== REF_CONSISTENT) return false;
+    if (state.verdict === "none" && r.verdict) return false;
     if (pair && pairKey(r.tabBrand, r.refBrand) !== pair.key) return false;
     if (!statusPass(r)) return false;
     if (!q) return true;
@@ -852,6 +986,16 @@ function visibleRows(ignoreSuspect = false) {
       [r.tabName, r.refName, r.tabBrand, r.refBrand, r.refSeries].some(v => v.toLowerCase().includes(q));
   });
 }
+
+const collator = new Intl.Collator("uk", { sensitivity: "base" });
+const SORTS = {
+  pair: (a, b) => (pairCount.get(pairKey(b.tabBrand, b.refBrand)) || 0) - (pairCount.get(pairKey(a.tabBrand, a.refBrand)) || 0)
+    || collator.compare(pairKey(a.tabBrand, a.refBrand), pairKey(b.tabBrand, b.refBrand)),
+  ref: (a, b) => collator.compare(a.refBrand, b.refBrand) || collator.compare(a.tabBrand, b.tabBrand),
+  tab: (a, b) => collator.compare(a.tabBrand, b.tabBrand) || collator.compare(a.refBrand, b.refBrand),
+  maker: (a, b) => collator.compare(a.refMaker, b.refMaker) || collator.compare(a.refBrand, b.refBrand),
+};
+const sorted = rows => SORTS[state.sort] ? [...rows].sort(SORTS[state.sort]) : rows;
 
 function pairsOf(rows) {
   const m = new Map();
@@ -899,9 +1043,11 @@ function itemHtml(r) {
       <div class="brand">${r.type === NO_REF_ROW ? `<span class="empty-val">еталона немає у файлі</span>` : brandCell(r.refBrand)}</div>
       <div class="name">${r.refLink ? `<a href="${esc(r.refLink)}" target="_blank" rel="noopener">${esc(r.refId)}</a>` : ""} ${esc(r.refName)}</div>
       ${refMeta ? `<div class="meta">${esc(refMeta)}</div>` : ""}
+      ${r.hint ? `<div class="bhint"><b>Підказка:</b> ${esc(r.hint)}</div>` : ""}
     </div>
     <div class="c-type">
       <span class="chip ${CHIP[r.type] ?? ""}">${esc(r.type)}</span>
+      ${r.verdict ? `<span class="chip ${r.verdict === REF_WRONG ? "v-wrong" : "v-ok"}">${esc(r.verdict)}</span>` : ""}
       ${r.suspect ? `<span class="chip suspect" title="У назв і виробників немає спільних слів">Підозра на хибне зіставлення</span>` : ""}
       ${r.refStatus ? `<small>Еталон: ${esc(r.refStatus)}</small>` : ""}
       <div class="decide">${itemSelect(r, own.status || "", inherit ? "За парою" : NONE)}${inherit}</div>
@@ -948,13 +1094,14 @@ function renderList() {
     $("count").textContent = `${fmt(list.length)} пар · ${fmt(rows.length)} товарів`;
     html = list.slice(0, state.shown).map(pairHtml);
   } else {
-    list = rows;
+    list = sorted(rows);
     $("count").textContent = `${fmt(rows.length)} товарів`;
-    html = rows.slice(0, state.shown).map(itemHtml);
+    html = list.slice(0, state.shown).map(itemHtml);
   }
   items.innerHTML = html.join("");
   state.visibleKeys = state.view === "pairs" ? list.map(p => p.key) : list.map(r => r.tabId);
-  renderBulk();
+  renderBulk(); markCursor(false);
+  if (state.progress) renderProgress();
   $("nothing").hidden = list.length > 0;
   more.hidden = list.length <= state.shown;
   more.textContent = `Показати ще ${fmt(Math.min(PAGE, list.length - state.shown))}`;
@@ -982,10 +1129,12 @@ function clearSelection() { state.selected.clear(); }
 /* --- експорт --- */
 const HEADERS = ["Група", "Тип розбіжності", "ID товару Tabletki", "Код Tabletki", "Назва Tabletki", "Бренд Tabletki", "Поле бренду Tabletki",
   "Виробник Tabletki", "Посилання Tabletki", "ID еталона", "Назва товару DWH", "Бренд еталона", "Серія бренду",
-  "Виробник еталона", "Статус еталона", "Посилання на еталон", "Підозра на хибне зіставлення", "Статус опрацювання", "Коментар", "Рішення для"];
+  "Виробник еталона", "Статус еталона", "Посилання на еталон", "Підозра на хибне зіставлення", "Підказка", "Висновок підказки", "Статус опрацювання", "Коментар", "Рішення для"];
 const FIELDS = ["type", "tabId", "tabCode", "tabName", "tabBrand", "tabBrandKey", "tabMaker", "tabLink", "refId", "refName",
   "refBrand", "refSeries", "refMaker", "refStatus", "refLink"];
-const WIDTHS = [18, 28, 12, 10, 50, 24, 18, 24, 30, 10, 50, 24, 24, 24, 12, 40, 14, 22, 40, 12];
+const WIDTHS = [18, 28, 12, 10, 50, 24, 18, 24, 30, 10, 50, 24, 24, 24, 12, 40, 14, 50, 26, 22, 40, 12];
+const HISTORY_KEYS = ["at", "by", "scope", "key", "tab", "ref", "field", "from", "to"];
+const HISTORY_HEADERS = ["Коли", "Хто", "Що", "ID товару або пара", "Бренд Tabletki", "Бренд еталона", "Поле", "Було", "Стало"];
 const FIX_HEADERS = ["ID еталона", "Назва товару DWH", "Бренд зараз", "Правильний бренд", "Звідки бренд", "Конфлікт",
   "Товари Tabletki", "Коментар", "Посилання на еталон"];
 const FIX_WIDTHS = [10, 50, 24, 24, 14, 10, 24, 40, 40];
@@ -1032,7 +1181,7 @@ function exportXlsx(kind) {
   }
   XLSX.utils.book_append_sheet(wb, sheet([HEADERS, ...rows.map(r => {
     const [st, note, src] = eff(r);
-    return [GROUP[r.type], ...FIELDS.map(f => r[f]), r.suspect ? "так" : "", STATUSES[st] ?? NONE, note, SOURCE[src]];
+    return [GROUP[r.type], ...FIELDS.map(f => r[f]), r.suspect ? "так" : "", r.hint, r.verdict, STATUSES[st] ?? NONE, note, SOURCE[src]];
   })], WIDTHS), "Розбіжності");
   XLSX.utils.book_append_sheet(wb, sheet([["Група", "Тип розбіжності", "Бренд Tabletki", "Бренд еталона", "Товарів", "Статус пари", "Коментар"],
     ...pairsOf(rows).map(p => { const rec = decisions.pairs[p.key] || {}; return [GROUP[p.type], p.type, p.tab, p.ref, p.n, STATUSES[rec.status] ?? NONE, rec.note ?? ""]; })],
@@ -1041,12 +1190,18 @@ function exportXlsx(kind) {
     const same = result.rows.length - rows.length;
     const summary = [["Показник", "Значення"], ["Товарів Tabletki у вивантаженні", result.tabTotal],
       ["Перевірено зіставлених", result.checked], [MATCH, result.counts[MATCH]],
-      ...Object.entries(GROUPS).flatMap(([g, ts]) => [[`${g}: усього`, ts.reduce((a, t) => a + result.counts[t], 0)], ...ts.map(t => [`  ${t}`, result.counts[t]])]),
+      ...Object.entries(GROUPS).flatMap(([g, ts]) => {
+        const total = ts.reduce((a, t) => a + result.counts[t], 0);
+        const done = result.rows.filter(r => GROUP[r.type] === g && eff(r)[0]).length;
+        return [[`${g}: усього`, total], [`${g}: опрацьовано`, `${done} з ${total}`], ...ts.map(t => [`  ${t}`, result.counts[t]])];
+      }),
       ["Підозра на хибне зіставлення", rows.filter(r => r.suspect).length], ["Позначено «Не помилка» (не в списку)", same],
       ["Усього в списку розбіжностей", rows.length], ["", ""], ...state.sources.map(s => ["Джерело", s])];
     XLSX.utils.book_append_sheet(wb, sheet(summary, [40, 60]), "Зведення");
     const fixes = refFixes(rows);
     if (fixes.length) XLSX.utils.book_append_sheet(wb, sheet([FIX_HEADERS, ...fixes], FIX_WIDTHS), "Виправлення еталона");
+    if (decisions.history.length) XLSX.utils.book_append_sheet(wb, sheet([HISTORY_HEADERS,
+      ...decisions.history.map(h => HISTORY_KEYS.map(k => h[k] ?? ""))], [17, 20, 8, 30, 24, 24, 10, 26, 26]), "Історія");
   }
   XLSX.writeFile(wb, `brand-check-${kind === "full" ? "" : "view-"}${stamp()}.xlsx`);
   $("export-menu").open = false;
@@ -1055,6 +1210,7 @@ function saveFile() {
   const blob = new Blob([JSON.stringify(decisions, null, 1)], { type: "application/json" });
   const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `decisions-${stamp()}.json` });
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  store.set(UNSAVED, "0"); store.set(SAVED_AT, String(Date.now())); renderSaveHint();
   $("export-menu").open = false;
   toast("Файл рішень збережено. Для Python-скрипта покладіть його як data/decisions.json.");
 }
@@ -1063,6 +1219,9 @@ async function loadFile(file) {
     const d = JSON.parse(await file.text());
     if (d.version !== 1) throw new Error();
     Object.assign(decisions.pairs, d.pairs || {}); Object.assign(decisions.items, d.items || {});
+    const seen = new Set(decisions.history.map(h => JSON.stringify(h)));
+    for (const h of d.history || []) if (!seen.has(JSON.stringify(h))) decisions.history.push(h);
+    decisions.history.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
     saveDecisions();
     toast(`Завантажено рішень: пар ${Object.keys(d.pairs || {}).length}, товарів ${Object.keys(d.items || {}).length}.`);
     if (state.result) renderAll();
@@ -1108,6 +1267,33 @@ $("items").addEventListener("click", e => {
   document.querySelectorAll("[data-view]").forEach(x => x.setAttribute("aria-pressed", x.dataset.view === "items"));
   renderList(); window.scrollTo({ top: $("results").offsetTop - 8 });
 });
+// Статус товару ("pair:…" — для всієї його пари) або пари; з тостом «Скасувати».
+function decideItem(id, value) {
+  const r = rowsById.get(id);
+  if (!r) return;
+  if (value.startsWith("pair:")) {
+    // Власний статус товару знімається, інакше він сильніший за пару.
+    const status = value.slice(5), key = pairKey(r.tabBrand, r.refBrand);
+    const prevPair = setDecision("pairs", key, status);
+    const prevItem = decisions.items[id]?.status ? setDecision("items", id, "") : undefined;
+    renderAll();
+    toast(`Пара (${fmt(pairCount.get(key) || 1)} тов.): ${statusLabel(status)}`, false, () => {
+      restore("pairs", key, prevPair);
+      if (prevItem !== undefined) restore("items", id, prevItem);
+      renderAll();
+    });
+    return;
+  }
+  const prev = setDecision("items", id, value);
+  renderAll();
+  toast(`Товар ${id}: ${statusLabel(value)}`, false, () => { restore("items", id, prev); renderAll(); });
+}
+function decidePair(key, value) {
+  const prev = setDecision("pairs", key, value);
+  renderAll();
+  toast(`Пара (${fmt(pairCount.get(key) || 1)} тов.): ${statusLabel(value)}`, false, () => { restore("pairs", key, prev); renderAll(); });
+}
+
 $("items").addEventListener("change", e => {
   const el = e.target;
   if (el.dataset.sel !== undefined) {
@@ -1116,25 +1302,9 @@ $("items").addEventListener("change", e => {
     return renderBulk();
   }
   if (el.dataset.brandScope) return setDecision(el.dataset.brandScope, el.dataset.brandKey, undefined, undefined, el.value.trim());
-  if (el.dataset.item !== undefined && el.value.startsWith("pair:")) {
-    // Статус для всієї пари з картки товару. Власний статус товару знімається, інакше він сильніший за пару.
-    const status = el.value.slice(5), id = el.dataset.item, key = el.dataset.pairKey;
-    const prevPair = setDecision("pairs", key, status);
-    const prevItem = decisions.items[id]?.status ? setDecision("items", id, "") : undefined;
-    renderAll();
-    toast(`Пара (${fmt(+el.dataset.n)} тов.): ${STATUSES[status]}`, false, () => {
-      restore("pairs", key, prevPair);
-      if (prevItem !== undefined) restore("items", id, prevItem);
-      renderAll();
-    });
-  } else if (el.dataset.item !== undefined || el.dataset.pairStatus !== undefined) {
-    const [scope, key] = el.dataset.item !== undefined ? ["items", el.dataset.item] : ["pairs", el.dataset.pairStatus];
-    const prev = setDecision(scope, key, el.value);
-    const label = STATUSES[el.value] ?? NONE;
-    const what = scope === "pairs" ? `Пара (${fmt(+el.dataset.n)} тов.)` : `Товар ${key}`;
-    renderAll();
-    toast(`${what}: ${label}`, false, () => { restore(scope, key, prev); renderAll(); });
-  } else if (el.dataset.noteItem !== undefined) setDecision("items", el.dataset.noteItem, undefined, el.value.trim());
+  if (el.dataset.item !== undefined) decideItem(el.dataset.item, el.value);
+  else if (el.dataset.pairStatus !== undefined) decidePair(el.dataset.pairStatus, el.value);
+  else if (el.dataset.noteItem !== undefined) setDecision("items", el.dataset.noteItem, undefined, el.value.trim());
   else if (el.dataset.notePair !== undefined) setDecision("pairs", el.dataset.notePair, undefined, el.value.trim());
 });
 $("pair-filter").addEventListener("click", e => {
@@ -1152,11 +1322,88 @@ $("bulk-status").addEventListener("change", () => { $("bulk-apply").disabled = $
 $("bulk-apply").addEventListener("click", () => {
   const status = $("bulk-status").value, scope = state.view === "pairs" ? "pairs" : "items";
   if (status === "-") return;
-  const before = JSON.parse(JSON.stringify(decisions)), n = state.selected.size;
-  for (const key of state.selected) setDecision(scope, key, status);
+  const before = JSON.parse(JSON.stringify({ pairs: decisions.pairs, items: decisions.items })), n = state.selected.size;
+  const keys = [...state.selected];
+  for (const key of keys) setDecision(scope, key, status);
   clearSelection(); $("bulk-status").value = "-"; renderAll();
-  toast(`${scope === "pairs" ? "Пар" : "Товарів"}: ${fmt(n)} → ${STATUSES[status] ?? NONE}`, false,
-    () => { decisions = before; saveDecisions(); renderAll(); });
+  toast(`${scope === "pairs" ? "Пар" : "Товарів"}: ${fmt(n)} → ${STATUSES[status] ?? NONE}`, false, () => {
+    for (const key of keys) restore(scope, key, before[scope][key] ?? null);
+    renderAll();
+  });
+});
+
+/* --- клавіатура: курсор по картках поточної сторінки --- */
+function cards() { return [...$("items").querySelectorAll(":scope > .item, :scope > .pair")]; }
+function markCursor(scroll) {
+  const list = cards();
+  list.forEach(c => c.classList.remove("focus"));
+  if (state.cursor < 0 || !list.length) return;
+  state.cursor = Math.min(state.cursor, list.length - 1);
+  list[state.cursor].classList.add("focus");
+  if (scroll) list[state.cursor].scrollIntoView({ block: "nearest" });
+}
+const cursorKey = () => { const c = cards()[state.cursor]; return c && (c.dataset.id ?? c.querySelector("[data-sel]")?.dataset.sel); };
+const KEY_STATUS = { Digit1: "same", Digit2: "fix_ref", Digit3: "fix_tab", Digit4: "question", Digit0: "" };
+document.addEventListener("keydown", e => {
+  if (!state.result || e.metaKey || e.ctrlKey || e.altKey || e.target.closest("input, select, textarea, [contenteditable]")) return;
+  if (e.key === "?") { $("keys").hidden = !$("keys").hidden; return; }
+  if (e.key === "/") { e.preventDefault(); $("search").focus(); return; }
+  const down = e.key === "ArrowDown" || e.key === "j" || e.key === "о", up = e.key === "ArrowUp" || e.key === "k" || e.key === "л";
+  if (down || up) {
+    e.preventDefault();
+    const n = cards().length;
+    if (!n) return;
+    state.cursor = state.cursor < 0 ? 0 : Math.max(0, Math.min(n - 1, state.cursor + (down ? 1 : -1)));
+    if (down && state.cursor === n - 1 && !$("more").hidden) { state.shown += PAGE; renderList(); }
+    return markCursor(true);
+  }
+  const key = cursorKey();
+  if (!key) return;
+  if (e.code in KEY_STATUS) {
+    e.preventDefault();
+    const st = KEY_STATUS[e.code];
+    if (state.view === "pairs") decidePair(key, st);
+    else decideItem(key, e.shiftKey && st ? "pair:" + st : st);
+    return markCursor(true);
+  }
+  if (e.code === "KeyX") {
+    if (state.selected.has(key)) state.selected.delete(key); else state.selected.add(key);
+    renderList(); return;
+  }
+  if (e.code === "KeyO" && state.view === "items") { const r = rowsById.get(key); if (r?.refLink) window.open(r.refLink, "_blank", "noopener"); }
+});
+$("keys-btn").addEventListener("click", () => { $("keys").hidden = !$("keys").hidden; });
+$("filter-ref-status").addEventListener("change", e => { state.refStatus = e.target.value; state.shown = PAGE; renderList(); });
+$("filter-verdict").addEventListener("change", e => { state.verdict = e.target.value; state.shown = PAGE; renderList(); });
+$("sort").addEventListener("change", e => { state.sort = e.target.value; state.shown = PAGE; state.cursor = -1; renderList(); });
+$("save-hint").addEventListener("click", saveFile);
+
+/* --- прогрес: опрацьовано по групах, сьогодні, хто, останні зміни --- */
+function renderProgress() {
+  const panel = $("progress-panel"), { result } = state;
+  const by = {};
+  for (const g of Object.keys(GROUPS)) by[g] = { done: 0, total: 0 };
+  for (const r of result.rows) { const g = by[GROUP[r.type]]; g.total++; if (eff(r)[0]) g.done++; }
+  const today10 = nowText().slice(0, 10);
+  const todays = decisions.history.filter(h => h.at.startsWith(today10));
+  const who = {};
+  for (const h of todays) who[h.by || "без імені"] = (who[h.by || "без імені"] || 0) + 1;
+  const bar = (label, d, t) => `<div class="pbar"><div><span>${esc(label)}</span><b>${fmt(d)} з ${fmt(t)}</b></div>
+    <span class="track"><i style="width:${t ? (d / t * 100).toFixed(1) : 0}%"></i></span></div>`;
+  panel.innerHTML = `
+    <div class="card"><h3>Опрацьовано (з «Не помилка»)</h3>${Object.entries(by).map(([g, v]) => bar(g, v.done, v.total)).join("")}</div>
+    <div class="card"><h3>Сьогодні</h3>
+      <p>Змін: <b>${fmt(todays.length)}</b>, товарів і пар: <b>${fmt(new Set(todays.map(h => h.scope + h.key)).size)}</b></p>
+      ${Object.entries(who).sort((a, b) => b[1] - a[1]).map(([w, n]) => `<p class="muted">${esc(w)}: ${fmt(n)}</p>`).join("")}
+      <p class="muted">Усього в історії: ${fmt(decisions.history.length)}</p></div>
+    <div class="card"><h3>Останні зміни</h3>${decisions.history.length ? `<table class="hist">${decisions.history.slice(-8).reverse().map(h =>
+      `<tr><td>${esc(h.at.slice(11))}</td><td>${esc(h.scope)} ${esc(h.tab || "—")} → ${esc(h.ref || "—")}<br><span class="muted">${esc(h.field)}: ${esc(h.from || "—")} → ${esc(h.to || "—")}</span></td></tr>`).join("")}</table>` : `<p class="muted">Змін ще немає.</p>`}</div>`;
+}
+$("progress-btn").addEventListener("click", () => {
+  state.progress = !state.progress;
+  $("progress-btn").setAttribute("aria-pressed", state.progress);
+  $("progress-panel").hidden = !state.progress;
+  if (state.progress) renderProgress();
 });
 
 $("reviewer").value = store.get(WHO) || "";
@@ -1177,8 +1424,8 @@ document.querySelectorAll("[data-export]").forEach(b => b.addEventListener("clic
     return toast("Збережену перевірку видалено з браузера.");
   }
   if (k === "clear") {
-    if (!confirm("Видалити всі статуси й коментарі в цьому браузері? Файли рішень не зачіпаються.")) return;
-    decisions = { version: 1, pairs: {}, items: {} }; saveDecisions();
+    if (!confirm("Видалити всі статуси, коментарі й історію змін у цьому браузері? Файли рішень не зачіпаються.")) return;
+    decisions = emptyDecisions(); saveDecisions(); store.set(UNSAVED, "0"); renderSaveHint();
     $("export-menu").open = false;
     if (state.result) renderAll();
     return;
@@ -1186,6 +1433,7 @@ document.querySelectorAll("[data-export]").forEach(b => b.addEventListener("clic
   exportXlsx(k);
 }));
 document.addEventListener("click", e => { const m = $("export-menu"); if (m.open && !m.contains(e.target)) m.open = false; });
+renderSaveHint();
 restoreResult();
 </script>
 </body>
